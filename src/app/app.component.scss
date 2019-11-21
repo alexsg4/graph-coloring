@@ -1,0 +1,43 @@
+@import '~@angular/material/prebuilt-themes/deeppurple-amber.css';
+
+$col-bg-body: #e0e0e0;
+$col-bg-footer: #818181;
+$col-text: white;
+
+body{
+  color: white;
+}
+
+.main-navbar{
+  height: 3em;
+
+  .spacer {
+    flex: 1 1 auto;
+  }
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+
+  main{
+    flex: 1;
+    background: $col-bg-body;
+  }
+
+  footer{
+    display: flex;
+    flex-direction: row;
+    align-content: center;
+    justify-items: center;
+
+    height: 2em;
+    background: $col-bg-footer;
+  }
+
+  *{
+    padding: 0.5em;
+    color: $col-text;
+  }
+}

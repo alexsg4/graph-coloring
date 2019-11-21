@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gexf xmlns="http://www.gexf.net/1.3" version="1.3" xmlns:viz="http://www.gexf.net/1.3/viz" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.gexf.net/1.3 http://www.gexf.net/1.3/gexf.xsd">
+  <meta lastmodifieddate="2019-11-21">
+    <creator>Gephi 0.9</creator>
+    <description></description>
+  </meta>
+  <graph defaultedgetype="directed" mode="static">
+    <nodes>
+      <node id="10" label="10">
+        <viz:size value="10.0"></viz:size>
+        <viz:position x="185.94049" y="-320.39447"></viz:position>
+      </node>
+      <node id="11" label="11">
+        <viz:size value="10.0"></viz:size>
+        <viz:position x="-436.98358" y="-283.2458"></viz:position>
+      </node>
+      <node id="12" label="12">
+        <viz:size value="10.0"></viz:size>
+        <viz:position x="19.387573" y="49.14734"></viz:position>
+      </node>
+      <node id="13" label="13">
+        <viz:size value="10.0"></viz:size>
+        <viz:position x="-369.07782" y="-359.8214"></viz:position>
+      </node>
+      <node id="14" label="14">
+        <viz:size value="10.0"></viz:size>
+        <viz:position x="41.3302" y="419.7798"></viz:position>
+      </node>
+      <node id="15" label="15">
+        <viz:size value="10.0"></viz:size>
+        <viz:position x="-168.3453" y="-421.43"></viz:position>
+      </node>
+      <node id="16" label="16">
+        <viz:size value="10.0"></viz:size>
+        <viz:position x="385.55994" y="253.94696"></viz:position>
+      </node>
+    </nodes>
+    <edges>
+      <edge id="55" source="10" target="11"></edge>
+      <edge id="56" source="10" target="12"></edge>
+      <edge id="57" source="10" target="13"></edge>
+      <edge id="58" source="10" target="14"></edge>
+      <edge id="59" source="10" target="15"></edge>
+      <edge id="60" source="10" target="16"></edge>
+      <edge id="61" source="11" target="12"></edge>
+      <edge id="62" source="11" target="13"></edge>
+      <edge id="63" source="11" target="14"></edge>
+      <edge id="64" source="11" target="15"></edge>
+      <edge id="65" source="11" target="16"></edge>
+      <edge id="66" source="12" target="13"></edge>
+      <edge id="67" source="12" target="14"></edge>
+      <edge id="68" source="12" target="15"></edge>
+      <edge id="69" source="12" target="16"></edge>
+      <edge id="70" source="13" target="14"></edge>
+      <edge id="71" source="13" target="15"></edge>
+      <edge id="72" source="13" target="16"></edge>
+      <edge id="73" source="14" target="15"></edge>
+      <edge id="74" source="14" target="16"></edge>
+      <edge id="75" source="15" target="16"></edge>
+    </edges>
+  </graph>
+</gexf>

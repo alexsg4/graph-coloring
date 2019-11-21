@@ -25,12 +25,17 @@
             "aot": false,
             "assets": [
               "src/favicon.ico",
-              "src/assets"
+              "src/assets",
+              {"glob": "**/*", "input":"./node_modules/sigma/build", "output": "/assets/lib" }
             ],
             "styles": [
               "src/styles.scss"
             ],
-            "scripts": []
+            "scripts": [
+              "src/assets/lib/sigma/sigma.conf.js",
+              "node_modules/sigma/build/sigma.min.js",
+              "node_modules/sigma/build/plugins/sigma.parsers.gexf.min.js"
+            ]
           },
           "configurations": {
             "production": {
@@ -95,7 +100,11 @@
             "styles": [
               "src/styles.scss"
             ],
-            "scripts": []
+            "scripts": [
+              "src/assets/lib/sigma/sigma.conf.js",
+              "node_modules/sigma/build/sigma.min.js",
+              "node_modules/sigma/build/plugins/sigma.parsers.gexf.min.js"
+            ]
           }
         },
         "lint": {
@@ -124,6 +133,7 @@
           }
         }
       }
-    }},
+    }
+  },
   "defaultProject": "graph-coloring"
 }
