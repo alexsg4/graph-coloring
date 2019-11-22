@@ -17,4 +17,12 @@ export class AppComponent implements OnInit {
       { container: 'graph-container' }
     );
   }
+
+  colorGraph(): void {
+    console.log('Color graph!');
+  }
+
+  resetGraph(): void {
+    console.log('Reset graph!');
+  }
 }

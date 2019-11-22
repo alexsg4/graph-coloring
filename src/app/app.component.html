@@ -1,18 +1,32 @@
+<header>
+  <mat-toolbar class="main-navbar" color="primary">
+    <span>{{ title }}</span>
+    <span class="spacer"></span>
+    <span> Nav 1 </span>
+    <span> Nav 2 </span>
+    <span> Nav 3 </span>
+  </mat-toolbar>
+</header>
 
-<mat-toolbar class="main-navbar" color="primary">
-  <span>{{ title }}</span>
-  <span class="spacer"></span>
-  <span> A link </span>
-</mat-toolbar>
+<main role="main">
+  <mat-grid-list cols="5" rowHeight="fit" gutterSize="3px" class="content">
+    <mat-grid-tile colspan="4" rowspan="2">
+      <div id="graph-container"> </div>
+    </mat-grid-tile>
 
-<div class="content" role="main">
-  <main id="graph-container">
+    <mat-grid-tile colspan="1" rowspan="1" id="controls">
+        <button (click)="colorGraph()" mat-raised-button color="primary">Color</button>
+        <button (click)="resetGraph()" mat-raised-button color="warn">Reset</button>
+    </mat-grid-tile>
 
-  </main>
-  <footer>
-    <span>Alexandru Stanciu</span>
-  </footer>
+    <mat-grid-tile colspan="1" rowspan="1" id="console">
+      Loading console
+    </mat-grid-tile>
+  </mat-grid-list>
+</main>
 
-</div>
+<footer>
+    <span>&copy; Alexandru Stanciu - 2019</span>
+</footer>
 
 <router-outlet></router-outlet>
