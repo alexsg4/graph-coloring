@@ -1,23 +1,7 @@
-@import '~@angular/material/prebuilt-themes/deeppurple-amber.css';
 
 $col-bg-body: #e0e0e0;
 $col-bg-footer: #818181;
 $col-text: white;
-
-*{
-  box-sizing: border-box;
-}
-
-html, body{
-  color: white;
-  height: 100%;
-}
-
-body{
-  display: flex;
-  flex-direction: column;
-}
-
 header{
   flex-shrink: 0;
   height: 3em;
@@ -54,8 +38,6 @@ main {
     #graph-container{
       height: 100%;
       width: 100%;
-
-      padding: 1em;
     }
 
     #console{
