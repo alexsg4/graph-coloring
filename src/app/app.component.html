@@ -10,16 +10,15 @@
 
 <main role="main">
   <mat-grid-list cols="5" rowHeight="fit" gutterSize="3px" class="content">
-    <mat-grid-tile colspan="4" rowspan="2">
+    <mat-grid-tile colspan="4" rowspan="4">
       <app-graph-view></app-graph-view>
     </mat-grid-tile>
 
     <mat-grid-tile colspan="1" rowspan="1" id="controls">
-        <button mat-raised-button color="primary"> Color </button>
-        <button mat-raised-button color="warn"> Reset </button>
+      <app-coloring-controls></app-coloring-controls>
     </mat-grid-tile>
 
-    <mat-grid-tile colspan="1" rowspan="1" id="console">
+    <mat-grid-tile colspan="1" rowspan="3" id="console">
       Loading console
     </mat-grid-tile>
   </mat-grid-list>
