@@ -1,7 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 
 declare const sigma: any;
-const colors = new Array<number>();
 
 @Component({
   selector: 'app-graph-view',
@@ -14,7 +13,7 @@ export class GraphViewComponent implements OnInit {
   private isColored: boolean;
   private graphContainerId = 'graph-container';
 
-  private K_NODE_COL_DEFAULT = 0x0;
+  private NODE_COLOR_DEFAULT = 0x0;
 
   constructor() {
     this.isColored = false;
@@ -55,7 +54,7 @@ export class GraphViewComponent implements OnInit {
       }
       const node = this.nodesIndex[nodeID];
       const colorStr = '#' + color.toString(16);
-      if (color === this.K_NODE_COL_DEFAULT) {
+      if (color === this.NODE_COLOR_DEFAULT) {
         node.label = node.label.match('[0-9]').toString();
       } else {
         node.label += ' ' + colorStr;
@@ -95,4 +94,39 @@ export class GraphViewComponent implements OnInit {
       }
     );
   }
+
+  private colorGraph(): void {
+    console.log('Color graph!');
+    if (this.isColored) {
+      console.warn('Graph is already colored. Please reset.');
+      return;
+    }
+
+    /*
+    for (const coloring of solution) {
+      const color = coloring[0];
+      for (const nodeId of coloring[1]) {
+        sigmaInstance.graph.colorNode(nodeId, color);
+      }
+    }
+    */
+
+    this.sigmaInstance.refresh();
+    this.isColored = true;
+  }
+
+  private resetGraph(): void {
+    console.log('Reset graph!');
+    if (!this.isColored) {
+      console.warn('Graph is not colored. Will not reset.');
+      return;
+    }
+    for (const node of this.sigmaInstance.graph.nodes()) {
+      this.sigmaInstance.graph.colorNode(node.id, this.NODE_COLOR_DEFAULT);
+    }
+
+    this.sigmaInstance.refresh();
+    this.isColored = false;
+  }
+
 }
