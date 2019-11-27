@@ -1,14 +1,5 @@
 import { Component, OnInit } from '@angular/core';
 
-declare const sigma: any;
-
-const graphContainerId = 'graph-container';
-const colors = new Array<number>();
-const K_NODE_COL_DEFAULT = 0x0;
-let isColored = false;
-
-let sigmaInstance = null;
-
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
@@ -18,74 +9,10 @@ export class AppComponent implements OnInit {
   title = 'graph-coloring';
 
   ngOnInit(): void {
-    sigma.classes.graph.addMethod('hasEdgeBetween', function(nodeID1: string, nodeID2: string): boolean {
-      if (!this.nodesIndex[nodeID1] || !this.nodesIndex[nodeID2]) {
-        console.error('Checking adj. for non-existent nodes!');
-        return false;
-      }
-      for (const edge of this.edgesArray) {
-        if ((edge.source === nodeID1 && edge.target === nodeID2) ||
-        (edge.source === nodeID2 && edge.target === nodeID1)) {
-          return true;
-        }
-      }
-      return false;
-    });
-
-    sigma.classes.graph.addMethod('colorNode', function(nodeID: string, color: number): void {
-      if (!this.nodesIndex[nodeID]) {
-        console.error('Color node: Error node does not exist!');
-        return;
-      }
-      const node = this.nodesIndex[nodeID];
-      const colorStr = '#' + color.toString(16);
-      if (color === K_NODE_COL_DEFAULT) {
-        node.label = node.label.match('[0-9]').toString();
-      } else {
-        node.label += ' ' + colorStr;
-      }
-      node.color = colorStr;
-    });
-
-    sigma.classes.graph.addMethod('getNodesCount', function() {
-      return this.nodesCount;
-    });
-
-    sigma.classes.graph.addMethod('getAdjList', function(nodeID: string): Array<string> {
-      if (!this.nodesIndex[nodeID]) {
-        console.error('Get neighbours: node does not exist!');
-        return;
-      }
-
-      const neighbours = new Array<string>();
-      for (const edge of this.edgesArray) {
-        if (edge.target === nodeID) {
-          neighbours.push(edge.source);
-        } else if (edge.source === nodeID) {
-          neighbours.push(edge.target);
-        }
-      }
-      return neighbours;
-    });
-
-    sigmaInstance = new sigma({
-      container: document.getElementById(graphContainerId),
-      settings: {
-        nodeColor: 'default',
-        edgeColor: 'default'
-      }
-    });
-
-    sigma.parsers.gexf(
-      'assets/graphs/testGraph.gexf',
-      sigmaInstance,
-      () => {
-        sigmaInstance.refresh();
-        sigmaInstance.refresh();
-      }
-    );
+    console.log('AppComponent: OnInit!');
   }
 
+  /*
   generateUniqueColor(): number {
     const min = 0x0;
     const max = 0xffffff;
@@ -103,6 +30,7 @@ export class AppComponent implements OnInit {
     }
     return array[array.length - 1];
   }
+  
   // Fisher-Yates shuffle
   shuffleArray<T>(array: Array<T>): void {
     for (let i = array.length - 1; i > 0; i--) {
@@ -200,7 +128,7 @@ export class AppComponent implements OnInit {
 
   resetGraph(): void {
     console.log('Reset graph!');
-    if(!isColored) {
+    if (!isColored) {
       console.warn('Graph is not colored. Will not reset.');
       return;
     }
@@ -210,4 +138,5 @@ export class AppComponent implements OnInit {
     sigmaInstance.refresh();
     isColored = false;
   }
+  */
 }

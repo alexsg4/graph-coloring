@@ -5,9 +5,9 @@ import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
-import {MatToolbarModule} from '@angular/material/toolbar';
-import {MatGridListModule} from '@angular/material/grid-list';
-import {MatButtonModule} from '@angular/material/button';
+import { MatToolbarModule } from '@angular/material/toolbar';
+import { MatGridListModule } from '@angular/material/grid-list';
+import { GraphModule } from './graph/graph.module';
 
 @NgModule({
   declarations: [
@@ -18,7 +18,8 @@ import {MatButtonModule} from '@angular/material/button';
     AppRoutingModule,
     BrowserAnimationsModule,
     MatToolbarModule,
-    MatGridListModule
+    MatGridListModule,
+    GraphModule
   ],
   providers: [],
   bootstrap: [AppComponent]
