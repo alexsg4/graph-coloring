@@ -75,4 +75,8 @@ export class SimpleGreedyStrategy extends ColoringStrategy {
 
     return candSol;
   }
+
+  public getID(): string {
+    return 'simpleGreedy';
+  }
 }

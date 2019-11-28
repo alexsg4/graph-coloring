@@ -1,4 +1,6 @@
 import { Component, OnInit } from '@angular/core';
+import { StrategySelectService } from '../coloring-controls/strategy-select.service';
+import { ColoringService } from '../coloring.service';
 
 declare const sigma: any;
 
@@ -12,10 +14,9 @@ export class GraphViewComponent implements OnInit {
   private sigmaInstance: any;
   private isColored: boolean;
   private graphContainerId = 'graph-container';
-
   private NODE_COLOR_DEFAULT = 0x0;
 
-  constructor() {
+  constructor(private strategySelect: StrategySelectService, private coloringService: ColoringService) {
     this.isColored = false;
     this.addGraphMethods();
    }
@@ -30,6 +31,14 @@ export class GraphViewComponent implements OnInit {
     });
     const testGraphFilePath = 'assets/graphs/testGraph.gexf';
     this.loadGraphFromFile(testGraphFilePath);
+
+    this.strategySelect.currentMessage.subscribe(
+      message => {
+         console.log('Received message ' + message + ' of type:', typeof(message));
+         this.colorGraph(message);
+      },
+      error => console.warn(error)
+    );
   }
 
   private addGraphMethods() {
@@ -53,13 +62,9 @@ export class GraphViewComponent implements OnInit {
         return;
       }
       const node = this.nodesIndex[nodeID];
-      const colorStr = '#' + color.toString(16);
-      if (color === this.NODE_COLOR_DEFAULT) {
-        node.label = node.label.match('[0-9]').toString();
-      } else {
-        node.label += ' ' + colorStr;
-      }
-      node.color = colorStr;
+      const colorStr = ' #' + color.toString(16);
+      node.label = node.label.match('[0-9]').toString() + colorStr;
+      node.color = colorStr.trim();
     });
 
     sigma.classes.graph.addMethod('getNodesCount', function() {
@@ -95,38 +100,35 @@ export class GraphViewComponent implements OnInit {
     );
   }
 
-  private colorGraph(): void {
+  private colorGraph(strategy: string): void {
     console.log('Color graph!');
     if (this.isColored) {
-      console.warn('Graph is already colored. Please reset.');
-      return;
+      console.warn('Graph is already colored. ');
     }
+    console.log('Received color request with strategy: ' + strategy);
 
-    /*
-    for (const coloring of solution) {
-      const color = coloring[0];
-      for (const nodeId of coloring[1]) {
-        sigmaInstance.graph.colorNode(nodeId, color);
-      }
-    }
-    */
-
-    this.sigmaInstance.refresh();
-    this.isColored = true;
-  }
-
-  private resetGraph(): void {
-    console.log('Reset graph!');
-    if (!this.isColored) {
+    const reset = (strategy === 'reset');
+    if (reset && !this.isColored) {
       console.warn('Graph is not colored. Will not reset.');
       return;
     }
-    for (const node of this.sigmaInstance.graph.nodes()) {
-      this.sigmaInstance.graph.colorNode(node.id, this.NODE_COLOR_DEFAULT);
+
+    const solution = this.coloringService.applyColoringStrategy(this.sigmaInstance.graph, strategy);
+
+    if (solution === null) {
+      console.warn('Solution is null!');
+      return;
+    }
+
+    for (const coloring of solution) {
+      const color = coloring[0];
+      for (const nodeId of coloring[1]) {
+        this.sigmaInstance.graph.colorNode(nodeId, color);
+      }
     }
 
     this.sigmaInstance.refresh();
-    this.isColored = false;
+    this.isColored = !reset;
   }
 
 }

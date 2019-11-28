@@ -8,7 +8,7 @@
     </mat-select>
   </mat-form-field>
   <div class="button-box">
-    <button mat-raised-button color="primary"> Color </button>
-    <button mat-raised-button color="warn"> Reset </button>
+    <button mat-raised-button (click) = sendColoring() color="primary"> Color </button>
+    <button mat-raised-button (click) = sendColoring(true) color="warn"> Reset </button>
   </div>
 </div>

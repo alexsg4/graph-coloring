@@ -24,6 +24,8 @@ export abstract class ColoringStrategy {
     return true;
   }
 
+  abstract getID(): string;
+
   protected getLast<T>(array: Array<T>): T {
     if (array.length === 0) {
       return null;
