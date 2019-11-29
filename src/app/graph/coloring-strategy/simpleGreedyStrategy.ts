@@ -4,8 +4,7 @@ export class SimpleGreedyStrategy extends ColoringStrategy {
 
   private isColorFeasible(
     color: number,
-    candSol: Map<number,
-    Array<string>>,
+    candSol: Map<number, Array<string>>,
     node: string,
     graphColoring: Map<string, number>,
     graph

@@ -2,6 +2,7 @@ export abstract class ColoringStrategy {
   protected colors = new Array<number>();
 
   constructor() {
+    // TODO reset colors before/after generating a solution
     this.colors.length = 0;
     this.generateUniqueColor();
   }
