@@ -1,69 +1,43 @@
-
+$col-bg-footer: #7a7a7a;
 $col-bg-body: #e0e0e0;
-$col-bg-footer: #818181;
-$col-text: white;
-header{
-  flex-shrink: 0;
-  height: 3em;
-  padding: 0;
-
-  .main-navbar{
-    height: 100%;
-    width: 100%;
-    margin: 0;
-
-    .spacer{
-      flex: 1 1 auto;
-    }
-
-    span{
-      padding: 0 0.75em;
-    }
-  }
-}
+$col-text: black;
 
 main {
-  flex: 1 0 auto;
-  color: $col-text;
+  height: 100vh;
 
-  .content{
+  mat-grid-list#content {
     background: $col-bg-body;
-    height: calc(100vh - 5em);
+    height: inherit;
+
+    #main-navbar{
+      height: 100%;
+      width: 100%;
+      margin: 0;
+
+      span{
+        padding: 0 0.75em;
+      }
+    }
 
     mat-grid-tile{
       background: lightblue;
-      color: black
+      color: $col-text;
     }
 
-    #graph-container{
-      height: 100%;
-      width: 100%;
-    }
-
-    #console{
+    /* TODO move styling to component */
+    mat-grid-tile#console{
       background: rgb(47, 47, 77);
       color: white;
     }
 
-    #controls{
-      background: rgb(152, 152, 243);
-      color: gray;
+    #footer{
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      padding: 0 0.7em;
 
-      button{
-        margin-right: 2px;
-      }
+      background: $col-bg-footer;
+      color: white;
     }
   }
-}
-
-footer{
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  padding: 0 0.7em;
-
-  height: 2em;
-  background: $col-bg-footer;
-  color: $col-text;
 }

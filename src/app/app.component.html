@@ -1,31 +1,30 @@
-<header>
-  <mat-toolbar class="main-navbar" color="primary">
-    <span>{{ title }}</span>
-    <span class="spacer"></span>
-    <span> Nav 1 </span>
-    <span> Nav 2 </span>
-    <span> Nav 3 </span>
-  </mat-toolbar>
-</header>
-
 <main role="main">
-  <mat-grid-list cols="5" rowHeight="fit" gutterSize="3px" class="content">
-    <mat-grid-tile colspan="4" rowspan="4">
+  <mat-grid-list id="content" cols="12" rowHeight="fit" gutterSize="0.5em">
+    <mat-grid-tile colspan="12" rowspan="1">
+      <mat-toolbar id="main-navbar" color="primary">
+        <span>{{ title }}</span>
+        <span class="spacer"></span>
+        <span> Color </span>
+        <span> Create </span>
+      </mat-toolbar>
+    </mat-grid-tile>
+
+    <mat-grid-tile colspan="9" rowspan="10">
       <app-graph-view></app-graph-view>
     </mat-grid-tile>
 
-    <mat-grid-tile colspan="1" rowspan="1" id="controls">
+    <mat-grid-tile colspan="3" rowspan="3" id="controls">
       <app-coloring-controls></app-coloring-controls>
     </mat-grid-tile>
 
-    <mat-grid-tile colspan="1" rowspan="3" id="console">
+    <mat-grid-tile colspan="3" rowspan="7" id="console">
       Loading console
+    </mat-grid-tile>
+
+    <mat-grid-tile id="footer" colspan="12" rowspan="1">
+      <span>&copy; Alexandru Stanciu - 2019</span>
     </mat-grid-tile>
   </mat-grid-list>
 </main>
-
-<footer>
-    <span>&copy; Alexandru Stanciu - 2019</span>
-</footer>
 
 <router-outlet></router-outlet>

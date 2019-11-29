@@ -5,14 +5,16 @@
 }
 
 html, body{
-  color: white;
   height: 100%;
+
+  margin: 0;
+  padding: 0;
 }
 
 body{
-  display: flex;
-  flex-direction: column;
-
-  margin: 0;
   font-family: Roboto, "Helvetica Neue", sans-serif;
+}
+
+.spacer{
+  flex: 1 1 auto;
 }

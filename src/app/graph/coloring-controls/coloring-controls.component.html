@@ -1,4 +1,5 @@
 <div class="container">
+  <h3>Algorithms</h3>
   <mat-form-field>
     <mat-label>Select an algorithm</mat-label>
     <mat-select disableOptionCentering [(value)]="selected">
@@ -6,6 +7,7 @@
       <mat-option value="dSatur">DSatur</mat-option>
     </mat-select>
   </mat-form-field>
+  <span class="spacer"></span>
   <div class="button-box">
     <button mat-raised-button (click) = sendColoring() color="primary"> Color </button>
     <button mat-raised-button (click) = sendColoring(true) color="warn"> Reset </button>

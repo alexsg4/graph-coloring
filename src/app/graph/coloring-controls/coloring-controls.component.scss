@@ -6,16 +6,26 @@
 .container {
   display: flex;
   flex-direction: column;
+
   padding: 1em;
+  height: inherit;
+
+  background: rgb(152, 152, 243);
+  color: gray;
 
   .mat-form-field {
     flex: 1;
   }
 
+  h2, h3, h4 {
+    margin: 0.25em 0;
+  }
+
   .button-box {
     display: flex;
     flex: 1;
-    align-content: center;
+    align-items: center;
+    justify-content: flex-end;
 
     button {
       margin-left: 0.5em;
