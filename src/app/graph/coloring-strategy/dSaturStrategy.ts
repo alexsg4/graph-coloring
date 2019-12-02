@@ -1,4 +1,5 @@
 import { ColoringStrategy } from './coloring-strategy';
+import { ColoringSolution } from './coloringSolution';
 
 export class DSaturStrategy extends ColoringStrategy {
 
@@ -9,8 +10,11 @@ export class DSaturStrategy extends ColoringStrategy {
     graphColoring: Map<string, number>,
     graph
   ): boolean {
-      if (candSol.get(color).length > graph.degree(node)) {
+
+    this.numChecks++;
+    if (candSol.get(color).length > graph.degree(node)) {
       for (const adj of graph.getAdjList(node)) {
+        this.numChecks++;
         if (graphColoring.get(adj) === color) {
           return false;
         }
@@ -18,6 +22,7 @@ export class DSaturStrategy extends ColoringStrategy {
       return true;
     } else {
       for (const coloredNode of candSol.get(color)) {
+        this.numChecks++;
         if (graph.hasEdgeBetween(node, coloredNode)) {
           return false;
         }
@@ -50,9 +55,11 @@ export class DSaturStrategy extends ColoringStrategy {
 
         // update saturation degrees
         for (let i = 0; i < saturation.length; i++) {
+          this.numChecks++;
           if (graph.hasEdgeBetween(node, nodeIds[i])) {
             alreadyAdj = false;
             for (const coloredNode of candSol.get(color)) {
+              this.numChecks++;
               if (graph.hasEdgeBetween(coloredNode, nodeIds[i])) {
                 alreadyAdj = true;
                 break;
@@ -72,12 +79,14 @@ export class DSaturStrategy extends ColoringStrategy {
     return false;
   }
 
-  public generateSolution(graph: any): Map<number, Array<string>> {
+  public generateSolution(graph: any): ColoringSolution {
     console.log('Color ' + this.getID());
     if (graph === null) {
       console.error('No graph defined');
       return;
     }
+
+    this.Init();
 
     // init and shuffle array of node indices
     const nodeIds = new Array<string>(graph.getNodesCount());
@@ -109,6 +118,7 @@ export class DSaturStrategy extends ColoringStrategy {
     nodeColoring.set(node, color);
     saturation.pop();
     for (let i = 0; i < saturation.length; i++) {
+      this.numChecks++;
       if (graph.hasEdgeBetween(node, nodeIds[i])) {
         saturation[i]++;
       }
@@ -142,9 +152,7 @@ export class DSaturStrategy extends ColoringStrategy {
       saturation.splice(nodeIndex, 1);
 
     }
-
-
-    return candSol;
+    return new ColoringSolution(candSol, this.numChecks);
   }
 
   public getID(): string {

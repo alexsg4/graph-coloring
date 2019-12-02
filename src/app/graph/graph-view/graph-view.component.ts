@@ -115,17 +115,19 @@ export class GraphViewComponent implements OnInit {
 
     const solution = this.coloringService.applyColoringStrategy(this.sigmaInstance.graph, strategy);
 
-    if (solution === null) {
-      console.warn('Solution is null!');
+    if (solution === null || solution === undefined || solution.coloring === null || solution.coloring === undefined) {
+      console.warn('Solution or coloring does not exist!');
       return;
     }
 
-    for (const coloring of solution) {
-      const color = coloring[0];
-      for (const nodeId of coloring[1]) {
+    for (const graphColoring of solution.coloring) {
+      const color = graphColoring[0];
+      for (const nodeId of graphColoring[1]) {
         this.sigmaInstance.graph.colorNode(nodeId, color);
       }
     }
+
+    console.log('Graph was colored with \'' + strategy + '\' numConfChecks: ' + solution.numConfChecks.toString());
 
     this.sigmaInstance.refresh();
     this.isColored = !reset;

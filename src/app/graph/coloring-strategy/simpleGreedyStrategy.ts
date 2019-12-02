@@ -1,4 +1,5 @@
 import { ColoringStrategy } from './coloring-strategy';
+import { ColoringSolution } from './coloringSolution';
 
 export class SimpleGreedyStrategy extends ColoringStrategy {
 
@@ -7,11 +8,13 @@ export class SimpleGreedyStrategy extends ColoringStrategy {
     candSol: Map<number, Array<string>>,
     node: string,
     graphColoring: Map<string, number>,
-    graph
+    graph: any
     ): boolean {
 
-      if (candSol.get(color).length > graph.degree(node)) {
+    this.numChecks++;
+    if (candSol.get(color).length > graph.degree(node)) {
       for (const adj of graph.getAdjList(node)) {
+        this.numChecks++;
         if (graphColoring.get(adj) === color) {
           return false;
         }
@@ -19,6 +22,7 @@ export class SimpleGreedyStrategy extends ColoringStrategy {
       return true;
     } else {
       for (const coloredNode of candSol.get(color)) {
+        this.numChecks++;
         if (graph.hasEdgeBetween(node, coloredNode)) {
           return false;
         }
@@ -27,12 +31,14 @@ export class SimpleGreedyStrategy extends ColoringStrategy {
     }
   }
 
-  public generateSolution(graph: any): Map<number, Array<string>> {
+  public generateSolution(graph: any): ColoringSolution {
     console.log('Color SimpleGreedy!');
     if (graph === null) {
       console.error('No graph defined');
       return;
     }
+
+    this.Init();
 
     // init and shuffle array of node indices
     const nodeIds = new Array<string>(graph.getNodesCount());
@@ -72,7 +78,7 @@ export class SimpleGreedyStrategy extends ColoringStrategy {
       }
     }
 
-    return candSol;
+    return new ColoringSolution(candSol, this.numChecks);
   }
 
   public getID(): string {

@@ -1,12 +1,20 @@
+import { ColoringSolution } from './coloringSolution';
+
 export abstract class ColoringStrategy {
   protected colors = new Array<number>();
+  protected numChecks = 0;
 
   constructor() {
     // TODO reset colors before/after generating a solution
-    this.colors.length = 0;
-    this.generateUniqueColor();
+    this.Init();
   }
 
+  protected Init() {
+    this.colors.length = 0;
+    this.generateUniqueColor();
+    this.numChecks = 0;
+  }
+  
   protected generateUniqueColor(): number {
     const min = 0x555555;
     const max = 0xdddddd;
@@ -18,9 +26,9 @@ export abstract class ColoringStrategy {
     return generatedColor;
   }
 
-  abstract generateSolution(graph: any): Map<number, Array<string>>;
+  abstract generateSolution(graph: any): ColoringSolution;
 
-  isSolutionValid(solution: Map<number, Array<string>>, graph: any): boolean {
+  isSolutionValid(solution: ColoringSolution, graph: any): boolean {
     // TODO add solution validation logic
     return true;
   }

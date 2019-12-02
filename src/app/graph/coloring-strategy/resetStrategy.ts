@@ -1,8 +1,9 @@
 import { ColoringStrategy } from './coloring-strategy';
+import { ColoringSolution } from './coloringSolution';
 
 export class ResetStrategy extends ColoringStrategy {
 
-  public generateSolution(graph: any): Map<number, Array<string>> {
+  public generateSolution(graph: any): ColoringSolution {
     console.log('Color ' + this.getID());
     if (graph === null) {
       console.error('No graph defined');
@@ -15,9 +16,10 @@ export class ResetStrategy extends ColoringStrategy {
     for (const node of graph.nodes()) {
       nodeIds[k++] = node.id;
     }
-    const solution = new Map<number, Array<string>>();
-    solution.set(0x0, nodeIds);
+    const coloring = new Map<number, Array<string>>();
+    coloring.set(0x0, nodeIds);
 
+    const solution = new ColoringSolution(coloring);
     return solution;
   }
 
