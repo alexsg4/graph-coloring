@@ -1,4 +1,5 @@
 import { ColoringSolution } from './coloringSolution';
+import { isNullOrUndefined } from 'util';
 
 export abstract class ColoringStrategy {
   protected colors = new Array<number>();
@@ -14,7 +15,7 @@ export abstract class ColoringStrategy {
     this.generateUniqueColor();
     this.numChecks = 0;
   }
-  
+
   protected generateUniqueColor(): number {
     const min = 0x555555;
     const max = 0xdddddd;
@@ -29,7 +30,25 @@ export abstract class ColoringStrategy {
   abstract generateSolution(graph: any): ColoringSolution;
 
   isSolutionValid(solution: ColoringSolution, graph: any): boolean {
-    // TODO add solution validation logic
+    if (isNullOrUndefined(solution)) {
+      console.error('isSolutionValid: solution is null or undefined.');
+      return undefined;
+    }
+
+    if (isNullOrUndefined(graph)) {
+      console.error('isSolutionValid: graph is null or undefined.');
+      return undefined;
+    }
+
+    const coloring = solution.coloring;
+    for (const node of graph.nodes()) {
+      for (const neighbourNodeId of graph.getAdjList(node.id)) {
+        if (coloring.get(node.id) === coloring.get(neighbourNodeId)) {
+          console.log('Coloring is not valid.');
+          return false;
+        }
+      }
+    }
     return true;
   }
 
