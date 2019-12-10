@@ -15,8 +15,6 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatFormFieldModule } from '@angular/material/form-field';
 
-
-
 export function coloringServiceFactory(...strategies: Array<ColoringStrategy>): ColoringService {
   return new ColoringService(strategies);
 }
