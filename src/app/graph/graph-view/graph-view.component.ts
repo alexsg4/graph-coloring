@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { StrategySelectService } from '../coloring-controls/strategy-select.service';
 import { ColoringService } from '../coloring.service';
+import { isNullOrUndefined } from 'util';
 
 declare const sigma: any;
 
@@ -115,16 +116,14 @@ export class GraphViewComponent implements OnInit {
 
     const solution = this.coloringService.applyColoringStrategy(this.sigmaInstance.graph, strategy);
 
-    if (solution === null || solution === undefined || solution.coloring === null || solution.coloring === undefined) {
+    if (isNullOrUndefined(solution) || isNullOrUndefined(solution.coloring)) {
       console.warn('Solution or coloring does not exist!');
       return;
     }
 
-    for (const graphColoring of solution.coloring) {
-      const color = graphColoring[0];
-      for (const nodeId of graphColoring[1]) {
-        this.sigmaInstance.graph.colorNode(nodeId, color);
-      }
+    for (const node of this.sigmaInstance.graph.nodes()) {
+      const nodeId = node.id;
+      this.sigmaInstance.graph.colorNode(nodeId, solution.coloring.get(nodeId));
     }
 
     console.log('Graph was colored with \'' + strategy + '\' numConfChecks: ' + solution.numConfChecks.toString());

@@ -1,18 +1,25 @@
 import { ColoringStrategy } from './coloring-strategy';
 import { ColoringSolution } from './coloringSolution';
+import { isNullOrUndefined } from 'util';
 
 export class SimpleGreedyStrategy extends ColoringStrategy {
 
   private isColorFeasible(
     color: number,
-    candSol: Map<number, Array<string>>,
     node: string,
     graphColoring: Map<string, number>,
     graph: any
     ): boolean {
 
     this.numChecks++;
-    if (candSol.get(color).length > graph.degree(node)) {
+
+    let numColoredNodes = 0;
+    for (const entry of graphColoring.entries()) {
+      if (entry[1] === color) {
+        numColoredNodes++;
+      }
+    }
+    if (numColoredNodes > graph.degree(node)) {
       for (const adj of graph.getAdjList(node)) {
         this.numChecks++;
         if (graphColoring.get(adj) === color) {
@@ -21,9 +28,9 @@ export class SimpleGreedyStrategy extends ColoringStrategy {
       }
       return true;
     } else {
-      for (const coloredNode of candSol.get(color)) {
+      for (const coloredNode of graphColoring.keys()) {
         this.numChecks++;
-        if (graph.hasEdgeBetween(node, coloredNode)) {
+        if (graphColoring.get(coloredNode) === color && graph.hasEdgeBetween(node, coloredNode)) {
           return false;
         }
       }
@@ -33,7 +40,7 @@ export class SimpleGreedyStrategy extends ColoringStrategy {
 
   public generateSolution(graph: any): ColoringSolution {
     console.log('Color SimpleGreedy!');
-    if (graph === null) {
+    if (isNullOrUndefined(graph)) {
       console.error('No graph defined');
       return;
     }
@@ -46,39 +53,34 @@ export class SimpleGreedyStrategy extends ColoringStrategy {
     for (const node of graph.nodes()) {
       nodeIds[k++] = node.id;
     }
-
     this.shuffleArray(nodeIds);
 
     const nodeColoring = new Map<string, number>();
-    const candSol = new Map<number, Array<string>>();
+
     let color = this.getLastColor();
     nodeColoring.set(nodeIds[0], color);
 
-    candSol.set(color, new Array<string>());
-    candSol.get(color).push(nodeIds[0]);
     let j = 0;
     for (const node of nodeIds) {
       // skip first element - TODO check if we can init cand sol in the loops
       if (node === nodeIds[0]) {
         continue;
       }
-      for (j = 0; j < candSol.size; j++) {
+      const numColoredNodes = nodeColoring.size;
+      for (j = 0; j < numColoredNodes; j++) {
         color = this.getLastColor();
-        if (this.isColorFeasible(color, candSol, node, nodeColoring, graph)) {
-          candSol.get(color).push(node);
+        if (this.isColorFeasible(color, node, nodeColoring, graph)) {
           nodeColoring.set(node, color);
           break;
         }
       }
-      if (j >= candSol.size) {
+      if (j >= numColoredNodes) {
         color = this.generateUniqueColor();
-        candSol.set(color, new Array<string>());
-        candSol.get(color).push(node);
         nodeColoring.set(node, color);
       }
     }
 
-    return new ColoringSolution(candSol, this.numChecks);
+    return new ColoringSolution(nodeColoring, this.numChecks);
   }
 
   public getID(): string {

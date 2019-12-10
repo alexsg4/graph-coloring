@@ -16,8 +16,10 @@ export class ResetStrategy extends ColoringStrategy {
     for (const node of graph.nodes()) {
       nodeIds[k++] = node.id;
     }
-    const coloring = new Map<number, Array<string>>();
-    coloring.set(0x0, nodeIds);
+    const coloring = new Map<string, number>();
+    for (const node of nodeIds) {
+      coloring.set(node, 0x0);
+    }
 
     const solution = new ColoringSolution(coloring);
     return solution;

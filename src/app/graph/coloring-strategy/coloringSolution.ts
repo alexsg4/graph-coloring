@@ -1,8 +1,8 @@
 export class ColoringSolution {
-  coloring: Map<number, Array<string>>;
+  coloring: Map<string, number>;
   numConfChecks: number;
 
-  constructor(coloring: Map<number, Array<string>>, numChecks = 0) {
+  constructor(coloring: Map<string, number>, numChecks = 0) {
     this.coloring = coloring;
     this.numConfChecks = numChecks;
   }
