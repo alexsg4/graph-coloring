@@ -151,34 +151,44 @@ export class GraphViewComponent implements OnInit {
   }
 
   private colorGraph(strategy: string): void {
+    if (strategy.toLowerCase() === 'none') {
+      // TODO could use a 'Reset' coloring to set all labels to #0
+      console.log('Hack: Ignore first color request message.');
+      return;
+    }
+
     console.log('Color graph!');
     if (this.isColored) {
-      console.warn('Graph is already colored. ');
+      console.warn('Graph is already colored.');
     }
     console.log('Received color request with strategy: ' + strategy);
 
-    const reset = (strategy === 'reset');
+    const reset = (strategy.toLowerCase() === 'reset');
     if (reset && !this.isColored) {
       console.warn('Graph is not colored. Will not reset.');
       return;
     }
 
-    const solution = this.coloringService.applyColoringStrategy(this.sigmaInstance.graph, strategy);
+    const graph = this.sigmaInstance.graph;
+    const solution = this.coloringService.applyColoringStrategy(graph, strategy);
 
     if (isNullOrUndefined(solution) || isNullOrUndefined(solution.coloring)) {
       console.warn('Solution or coloring does not exist!');
       return;
     }
 
-    for (const node of this.sigmaInstance.graph.nodes()) {
+    for (const node of graph.nodes()) {
       const nodeId = node.id;
-      this.sigmaInstance.graph.colorNode(nodeId, solution.coloring.get(nodeId));
+      graph.colorNode(nodeId, solution.coloring.get(nodeId));
     }
 
-    console.log('Graph was colored with \'' + strategy + '\' numConfChecks: ' + solution.numConfChecks.toString());
+    if (!reset) {
+      console.log('Graph was colored with \'' + strategy + '\' numConfChecks: ' + solution.numConfChecks.toString());
+      const validString = solution.isValid(graph) ? 'valid' : 'invalid';
+      console.log('Coloring is ' + validString + '!');
+    }
 
     this.sigmaInstance.refresh();
     this.isColored = !reset;
   }
-
 }

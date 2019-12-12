@@ -28,29 +28,6 @@ export abstract class ColoringStrategy {
 
   abstract generateSolution(graph: any): ColoringSolution;
 
-  isSolutionValid(solution: ColoringSolution, graph: any): boolean {
-    if (isNullOrUndefined(solution)) {
-      console.error('isSolutionValid: solution is null or undefined.');
-      return undefined;
-    }
-
-    if (isNullOrUndefined(graph)) {
-      console.error('isSolutionValid: graph is null or undefined.');
-      return undefined;
-    }
-
-    const coloring = solution.coloring;
-    for (const node of graph.nodes()) {
-      for (const neighbourNodeId of graph.getAdjList(node.id)) {
-        if (coloring.get(node.id) === coloring.get(neighbourNodeId)) {
-          console.log('Coloring is not valid.');
-          return false;
-        }
-      }
-    }
-    return true;
-  }
-
   abstract getID(): string;
 
   protected getLast<T>(array: Array<T>): T {
