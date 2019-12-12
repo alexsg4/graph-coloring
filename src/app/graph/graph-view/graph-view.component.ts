@@ -95,7 +95,56 @@ export class GraphViewComponent implements OnInit {
       filePath,
       this.sigmaInstance,
       () => {
+
+
+        // rebuild graph form scratch with clean node IDs
+        const graph = this.sigmaInstance.graph;
+        if (isNullOrUndefined(graph)) {
+          console.error('graph could not be loaded');
+        }
+
+        let nodeId = 0;
+        const newIds = new Map<string, number>();
+
+        for (const node of graph.nodes()) {
+          newIds.set(node.id, nodeId++);
+        }
+
+        // update edges with new node id
+        const oldEdges = graph.edges();
+
+        for (const oldNode of graph.nodes()) {
+          graph.dropNode(oldNode.id);
+          const newId = newIds.get(oldNode.id);
+          graph.addNode(
+            {
+              color: oldNode.color,
+              id: newId.toString(),
+              label: (newId + 1).toString(),
+              size: oldNode.size,
+              viz: oldNode.viz,
+              x: oldNode.x,
+              y: oldNode.y
+          });
+        }
+
+        let newEdgeId = 0;
+        for (const oldEdge of oldEdges) {
+          graph.addEdge({
+            color: oldEdge.color,
+            direction: 'undirected',
+            id: (newEdgeId++).toString(),
+            label: oldEdge.label,
+            size: oldEdge.size,
+            source: newIds.get(oldEdge.source).toString(),
+            target: newIds.get(oldEdge.target).toString(),
+            viz: oldEdge.viz,
+            weight: oldEdge.weight
+          });
+        }
+
         this.sigmaInstance.refresh();
+        // hack: refresh twice to ensure graph is displayed correctly
         this.sigmaInstance.refresh();
       }
     );
