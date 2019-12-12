@@ -6,7 +6,6 @@ export abstract class ColoringStrategy {
   protected numChecks = 0;
 
   constructor() {
-    // TODO reset colors before/after generating a solution
     this.Init();
   }
 
