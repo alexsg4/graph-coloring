@@ -9,6 +9,7 @@ import { ColoringStrategy } from './coloring-strategy/coloring-strategy';
 import { SimpleGreedyStrategy } from './coloring-strategy/simpleGreedyStrategy';
 import { DSaturStrategy } from './coloring-strategy/dSaturStrategy';
 import { ResetStrategy } from './coloring-strategy/resetStrategy';
+import { TabuColStrategy } from './coloring-strategy/tabuColStrategy';
 
 import { MatButtonModule } from '@angular/material/button';
 import { MatSelectModule } from '@angular/material/select';
@@ -25,7 +26,8 @@ const COLORING_PROVIDER: FactoryProvider = {
   deps: [
     SimpleGreedyStrategy,
     DSaturStrategy,
-    ResetStrategy
+    ResetStrategy,
+    TabuColStrategy
   ]
 };
 
@@ -50,7 +52,8 @@ const COLORING_PROVIDER: FactoryProvider = {
     COLORING_PROVIDER,
     SimpleGreedyStrategy,
     DSaturStrategy,
-    ResetStrategy
+    ResetStrategy,
+    TabuColStrategy
   ]
 })
 export class GraphModule { }
