@@ -1,5 +1,5 @@
 import { ColoringStrategy } from './coloring-strategy';
-import { ColoringSolution } from './coloringSolution';
+import { ColoringSolution } from './coloring-solution';
 import { isNullOrUndefined } from 'util';
 
 export class DSaturStrategy extends ColoringStrategy {

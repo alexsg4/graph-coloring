@@ -1,6 +1,6 @@
 import { ColoringStrategy } from './coloring-strategy';
-import { DSaturStrategy } from './dSaturStrategy';
-import { ColoringSolution } from './coloringSolution';
+import { DSaturStrategy } from './dsatur-strategy';
+import { ColoringSolution } from './coloring-solution';
 import { isUndefined, isNullOrUndefined } from 'util';
 
 export class TabuConfig {

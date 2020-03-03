@@ -6,9 +6,9 @@ import { ColoringControlsComponent } from './coloring-controls/coloring-controls
 import { ColoringService } from './coloring.service';
 import { StrategySelectService } from './coloring-controls/strategy-select.service';
 import { ColoringStrategy } from './coloring-strategy/coloring-strategy';
-import { SimpleGreedyStrategy } from './coloring-strategy/simpleGreedyStrategy';
-import { DSaturStrategy } from './coloring-strategy/dSaturStrategy';
-import { TabuColStrategy } from './coloring-strategy/tabuColStrategy';
+import { SimpleGreedyStrategy } from './coloring-strategy/greedy-strategy';
+import { DSaturStrategy } from './coloring-strategy/dsatur-strategy';
+import { TabuColStrategy } from './coloring-strategy/tabu-col-strategy';
 
 import { MatButtonModule } from '@angular/material/button';
 import { MatSelectModule } from '@angular/material/select';

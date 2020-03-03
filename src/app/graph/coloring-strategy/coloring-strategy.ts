@@ -1,4 +1,4 @@
-import { ColoringSolution } from './coloringSolution';
+import { ColoringSolution } from './coloring-solution';
 import { ColorGeneratorService } from '../color-generator.service';
 import { Inject } from '@angular/core';
 import { isNullOrUndefined } from 'util';
