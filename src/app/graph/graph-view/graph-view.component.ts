@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { StrategySelectService } from '../coloring-controls/strategy-select.service';
 import { ColoringService } from '../coloring.service';
 import { isNullOrUndefined } from 'util';
+import { ColorGeneratorService } from '../color-generator.service';
 
 declare const sigma: any;
 
@@ -15,9 +16,10 @@ export class GraphViewComponent implements OnInit {
   private sigmaInstance: any;
   private isColored: boolean;
   private graphContainerId = 'graph-container';
-  private NODE_COLOR_DEFAULT = 0x0;
 
-  constructor(private strategySelect: StrategySelectService, private coloringService: ColoringService) {
+  constructor(private strategySelect: StrategySelectService,
+              private coloringService: ColoringService,
+              private colorGenerator: ColorGeneratorService) {
     this.isColored = false;
     this.addGraphMethods();
    }
@@ -57,7 +59,15 @@ export class GraphViewComponent implements OnInit {
       return false;
     });
 
-    sigma.classes.graph.addMethod('colorNode', function(nodeID: string, color: number): void {
+    sigma.classes.graph.addMethod('resetColoring', function(): void {
+      for (let i = 0; i < this.nodesArray.length; i++) {
+        const node = this.nodesIndex[i];
+        node.color = '#000000';
+        node.label = node.label.match('[0-9]+').join('');
+      }
+    });
+
+    sigma.classes.graph.addMethod('colorNodeHex', function(nodeID: string, color: number): void {
       if (!this.nodesIndex[nodeID]) {
         console.error('Color node: Error node does not exist!');
         return;
@@ -68,8 +78,22 @@ export class GraphViewComponent implements OnInit {
       node.color = colorStr.trim();
     });
 
+    sigma.classes.graph.addMethod('colorNode', function(nodeID: string, color: string): void {
+      if (!this.nodesIndex[nodeID]) {
+        console.error('Color node: Error node does not exist!');
+        return;
+      }
+      if (isNullOrUndefined(color)) {
+        console.error('Color node: invalid color!');
+        return;
+      }
+      const node = this.nodesIndex[nodeID];
+      node.label = node.label.match('[0-9]').toString() + ' ' + color;
+      node.color = color.trim();
+    });
+
     sigma.classes.graph.addMethod('getNodesCount', function() {
-      return this.nodesCount;
+      return this.nodesArray.length;;
     });
 
     sigma.classes.graph.addMethod('getAdjList', function(nodeID: string): Array<string> {
@@ -167,7 +191,6 @@ export class GraphViewComponent implements OnInit {
 
   private colorGraph(strategy: string): void {
     if (strategy.toLowerCase() === 'none') {
-      // TODO could use a 'Reset' coloring to set all labels to #0
       console.log('Hack: Ignore first color request message.');
       return;
     }
@@ -178,13 +201,21 @@ export class GraphViewComponent implements OnInit {
     }
     console.log('Received color request with strategy: ' + strategy);
 
-    const reset = (strategy.toLowerCase() === 'reset');
-    if (reset && !this.isColored) {
-      console.warn('Graph is not colored. Will not reset.');
-      return;
-    }
-
     const graph = this.sigmaInstance.graph;
+
+    const reset = (strategy.toLowerCase() === 'reset');
+    if (reset) {
+      if (!this.isColored) {
+        console.warn('Graph is not colored. Will not reset.');
+        return;
+      } else {
+        graph.resetColoring();
+        this.isColored = false;
+        this.sigmaInstance.refresh();
+        console.warn('Graph coloring was reset.');
+        return;
+      }
+    }
     const solution = this.coloringService.applyColoringStrategy(graph, strategy);
 
     if (isNullOrUndefined(solution) || isNullOrUndefined(solution.coloring)) {
@@ -194,16 +225,18 @@ export class GraphViewComponent implements OnInit {
 
     for (const node of graph.nodes()) {
       const nodeId = node.id;
-      graph.colorNode(nodeId, solution.coloring.get(nodeId));
+      const nodeColor = this.colorGenerator.getColorByIndex(solution.coloring.get(nodeId));
+
+      if (isNullOrUndefined(node)) {
+        console.error('ColorGraph: invalid color');
+      }
+      graph.colorNode(nodeId, nodeColor);
     }
 
-    if (!reset) {
-      console.log('Graph was colored with \'' + strategy + '\' numConfChecks: ' + solution.numConfChecks.toString());
-      const validString = solution.isValid(graph) ? 'valid' : 'invalid';
-      console.log('Coloring is ' + validString + '!');
-    }
-
+    console.log('Graph was colored with \'' + strategy + '\' numConfChecks: ' + solution.numConfChecks.toString());
+    const validString = solution.isValid(graph) ? 'valid' : 'invalid';
+    console.log('Coloring is ' + validString + '!');
+    this.isColored = true;
     this.sigmaInstance.refresh();
-    this.isColored = !reset;
   }
 }

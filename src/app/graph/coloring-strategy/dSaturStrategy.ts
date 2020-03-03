@@ -53,7 +53,7 @@ export class DSaturStrategy extends ColoringStrategy {
     }
     const node = nodeIds[nodeIndex];
 
-    for (const color of this.colors) {
+    for (let color = 0; color < this.getLastColor(); color++) {
       if (this.isColorFeasible(color, node, nodeColoring, graph)) {
         foundColor = true;
         nodeColoring.set(node, color);
@@ -150,7 +150,6 @@ export class DSaturStrategy extends ColoringStrategy {
       }
       nodeIds.splice(nodeIndex, 1);
       saturation.splice(nodeIndex, 1);
-
     }
     return new ColoringSolution(nodeColoring, this.numChecks);
   }

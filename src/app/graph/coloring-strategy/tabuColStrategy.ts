@@ -2,7 +2,6 @@ import { ColoringStrategy } from './coloring-strategy';
 import { DSaturStrategy } from './dSaturStrategy';
 import { ColoringSolution } from './coloringSolution';
 import { isUndefined, isNullOrUndefined } from 'util';
-import { ArrayDataSource } from '@angular/cdk/collections';
 
 export class TabuConfig {
   maxChecks = 10000000;
@@ -48,14 +47,9 @@ export class TabuColStrategy extends ColoringStrategy {
     }
 
     this.shuffleArray(nodeIds);
-    while (this.colors.length < numColors) {
-      this.generateUniqueColor();
-    }
+    this.colorGenerator.fill(numColors);
 
-    const usedColors = new Map<number, boolean>();
-    for (const color of this.colors) {
-      usedColors.set(color, false);
-    }
+    const usedColors = new Array<boolean>(numColors).fill(false);
 
     for (const nodeId of nodeIds) {
       usedColors.forEach(entry => entry = false);
@@ -67,21 +61,21 @@ export class TabuColStrategy extends ColoringStrategy {
           if (isUndefined(color)) {
             console.error('color not found!');
           }
-          usedColors.set(color, true);
+          usedColors[color] = true;
         }
       }
-      if (usedColors.get(coloring.get(nodeId))) {
+      if (usedColors[coloring.get(nodeId)]) {
         let foundColor = false;
-        for (const col of this.colors) {
-          if (!usedColors.get(col)) {
+        for (let col = 0; col < numColors; col++) {
+          if (!usedColors[col]) {
             coloring.set(nodeId, col);
             foundColor = true;
             break;
           }
         }
         if (!foundColor) {
-          const randColorId = Math.floor(Math.random() * (this.colors.length - 1));
-          coloring.set(nodeId, this.colors[randColorId]);
+          const randColor = Math.floor(Math.random() * (numColors - 1));
+          coloring.set(nodeId, randColor);
         }
       }
     }
@@ -124,7 +118,7 @@ export class TabuColStrategy extends ColoringStrategy {
       for (const node of coloring.keys()) {
         tabuStatus.set(node, new Map<number, number>());
         const colorStatus = tabuStatus.get(node);
-        for (const color of this.colors) {
+        for (let color = 0; color < this.getLastColor(); color ++) {
           colorStatus.set(color, 0);
         }
       }
@@ -156,7 +150,7 @@ export class TabuColStrategy extends ColoringStrategy {
     this.Init();
 
     const nodesCount = graph.getNodesCount();
-    const constructiveAlgo = new DSaturStrategy();
+    const constructiveAlgo = new DSaturStrategy(this.colorGenerator);
     const initialSolution = constructiveAlgo.generateSolution(graph);
 
     let cost: number;
@@ -168,7 +162,7 @@ export class TabuColStrategy extends ColoringStrategy {
     this.numChecks += initialSolution.numConfChecks;
     let bestColoring = initialSolution.coloring;
     const coloring = new Map<string, number>();
-    let numColors = this.colors.length; // the number of unique colors used in the initial solution
+    let numColors = this.getLastColor(); // the number of unique colors used in the initial solution
 
     numColors--;
     while (this.numChecks < this.config.maxChecks && numColors + 1 > this.config.colorTarget) {

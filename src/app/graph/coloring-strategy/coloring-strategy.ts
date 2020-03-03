@@ -1,44 +1,34 @@
 import { ColoringSolution } from './coloringSolution';
+import { ColorGeneratorService } from '../color-generator.service';
+import { Inject } from '@angular/core';
 import { isNullOrUndefined } from 'util';
 
 export abstract class ColoringStrategy {
-  protected colors = new Array<number>();
   protected numChecks = 0;
 
-  constructor() {
+  constructor(@Inject(ColorGeneratorService) protected colorGenerator: ColorGeneratorService) {
     this.Init();
   }
 
   protected Init() {
-    this.colors.length = 0;
     this.generateUniqueColor();
     this.numChecks = 0;
-  }
-
-  protected generateUniqueColor(): number {
-    const min = 0x555555;
-    const max = 0xdddddd;
-    let generatedColor = Math.floor(Math.random() * (max - min)) + min;
-    while (this.colors.includes(generatedColor)) {
-      generatedColor = Math.floor(Math.random() * (max - min)) + min;
-    }
-    this.colors.push(generatedColor);
-    return generatedColor;
   }
 
   abstract generateSolution(graph: any): ColoringSolution;
 
   abstract getID(): string;
 
-  protected getLast<T>(array: Array<T>): T {
-    if (array.length === 0) {
-      return null;
-    }
-    return array[array.length - 1];
+  protected generateUniqueColor(): number {
+    return this.colorGenerator.generateColor();
   }
 
   protected getLastColor(): number {
-    return this.getLast(this.colors);
+    return this.colorGenerator.getNumColors() - 1;
+  }
+
+  public getColorById(id: number) {
+    return this.colorGenerator.getColorByIndex(id);
   }
 
   // Fisher-Yates shuffle
