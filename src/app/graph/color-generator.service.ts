@@ -30,6 +30,22 @@ export class ColorGeneratorService {
     }
   }
 
+  public resize(numColors: number) {
+    if (numColors <= 0) {
+      console.warn('Invalid num colors.');
+      return;
+    }
+
+    const n = this.colors.length;
+    if (n < numColors) {
+      for (let i = 0; i < numColors - n; i++) {
+        this.generateColor();
+      }
+    } else if (n > numColors) {
+      this.colors.splice(numColors, n - numColors);
+    }
+  }
+
   public getNumColors(): number {
     return this.colors.length;
   }

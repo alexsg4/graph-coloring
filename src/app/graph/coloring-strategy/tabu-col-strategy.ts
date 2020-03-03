@@ -4,14 +4,20 @@ import { ColoringSolution } from './coloring-solution';
 import { isUndefined, isNullOrUndefined } from 'util';
 
 export class TabuConfig {
-  maxChecks = 10000000;
-  colorTarget = 2;
-  tenure = 1;
-  frequency = 15000;
-  increment = 1;
+  maxChecks: number;
+  colorTarget: number;
+  tenure: number;
+  frequency: number;
+  increment: number;
 
-  constructor(maxChecks: number, colors: number, tenure: number, freq: number, inc: number) {
-    this.Build(maxChecks, colors, tenure, freq, inc);
+  constructor(
+    maxChecks = 10000000,
+    colors = 2,
+    tenure = 1,
+    freq = 15000,
+    inc = 1) {
+
+      this.Build(maxChecks, colors, tenure, freq, inc);
   }
 
   Build(maxChecks: number, colors: number, tenure: number, freq: number, inc: number) {
@@ -28,6 +34,11 @@ export class TabuColStrategy extends ColoringStrategy {
   // TODO make user-configurable
   private config: TabuConfig;
 
+  protected Init() {
+    super.Init();
+    this.config = new TabuConfig();
+  }
+
   private InitializeColoringForTabu(
     graph: any,
     coloring: Map<string, number>,
@@ -40,14 +51,10 @@ export class TabuColStrategy extends ColoringStrategy {
     }
 
     // init and shuffle array of node indices
-    const nodeIds = new Array<string>(graph.getNodesCount());
-    let k = 0;
-    for (const node of graph.nodes()) {
-      nodeIds[k++] = node.id;
-    }
+    const nodeIds = graph.nodes().map(node => node.id);
 
     this.shuffleArray(nodeIds);
-    this.colorGenerator.fill(numColors);
+    this.colorGenerator.resize(numColors);
 
     const usedColors = new Array<boolean>(numColors).fill(false);
 
@@ -81,8 +88,9 @@ export class TabuColStrategy extends ColoringStrategy {
     }
   }
 
-  InitializeArrays(
+  private InitializeArrays(
     nodesByColor: any,
+    nbcPos: any,
     conflicts: any,
     tabuStatus: any,
     graph: any,
@@ -90,39 +98,39 @@ export class TabuColStrategy extends ColoringStrategy {
     numColors: number
   ) {
 
-    nodesByColor = new Map<number, Array<string>>();
-    for (const pair of coloring) {
-      const coloredNodes = nodesByColor.get(pair[1]);
-      if (isUndefined(coloredNodes)) {
-        nodesByColor.set(pair[0], new Array<string>(pair[1]));
-      } else {
-        coloredNodes.push(pair[1]);
-      }
+    const nodes = graph.nodes();
+    const n = nodes.length;
 
-      conflicts = new Map<number, Map<string, number>>();
-      for (const node of coloring.keys()) {
-        for (const otherNode of graph.getAdjList(node)) {
-          this.numChecks++;
+    for (let i = 0; i <= numColors; i++) {
+      nodesByColor[i] = new Array<number>(n + 1).fill(0);
+      conflicts[i] = new Array<number>(n + 1).fill(0);
+    }
 
-          const otherNodeColor = coloring.get(otherNode);
-          const nodesInConflict = conflicts.get(otherNodeColor);
-          if (isUndefined(nodesInConflict)) {
-            conflicts.set(otherNodeColor, new Array<string>(otherNode));
-          } else {
-            nodesInConflict.push(otherNode);
-          }
-        }
-      }
+    for (let i = 0; i < n; i++) {
+      tabuStatus[i] = new Array<number>(numColors + 1).fill(0);
+    }
 
-      tabuStatus = new Map<string, Map<number, number>>();
-      for (const node of coloring.keys()) {
-        tabuStatus.set(node, new Map<number, number>());
-        const colorStatus = tabuStatus.get(node);
-        for (let color = 0; color < this.getLastColor(); color ++) {
-          colorStatus.set(color, 0);
+    for (let i = 0; i < n; i++) {
+      const col = coloring.get(nodes[i].id);
+      nodesByColor[col][0]++;
+      nbcPos[i] = nodesByColor[col][0];
+      nodesByColor[col][nbcPos[i]] = i;
+    }
+
+    for (let i = 0; i < n; i++) {
+      for (let j = 0; j < n; j++) {
+        this.numChecks++;
+        if (i !== j && graph.hasEdgeBetween(nodes[i].id, nodes[j].id)) {
+          const col = coloring.get(nodes[j].id);
+          conflicts[col][i]++;
         }
       }
     }
+  }
+
+  private MoveNodeToColor() {
+    // TODO implement
+    return;
   }
 
   private Tabu(
@@ -132,10 +140,19 @@ export class TabuColStrategy extends ColoringStrategy {
     config: TabuConfig
   ): number {
 
+    this.InitializeColoringForTabu(graph, coloring, numColors);
     let cost = 0;
 
-    this.InitializeColoringForTabu(graph, coloring, numColors);
+    const n = graph.getNodesCount();
+    const nodesByColor = new Array<Array<number>>(numColors + 1);
+    const conflicts = new Array<Array<number>>(numColors + 1);
+    const tabuStatus = new Array<Array<number>>(n);
+    const nbcPos = new Array<number>(n + 1).fill(0);
+    const nodesInConflict = new Array<number>(n + 1).fill(0);
+    const confPos = new Array<number>(n).fill(0);
 
+    this.InitializeArrays(nodesByColor, nbcPos, conflicts, tabuStatus, graph, coloring, numColors);
+    console.log(nbcPos);
 
     return cost;
   }
@@ -161,7 +178,7 @@ export class TabuColStrategy extends ColoringStrategy {
 
     this.numChecks += initialSolution.numConfChecks;
     let bestColoring = initialSolution.coloring;
-    const coloring = new Map<string, number>();
+    const coloring = bestColoring;
     let numColors = this.getLastColor(); // the number of unique colors used in the initial solution
 
     numColors--;
