@@ -233,7 +233,9 @@ export class GraphViewComponent implements OnInit {
       graph.colorNode(nodeId, nodeColor);
     }
 
-    console.log('Graph was colored with \'' + strategy + '\' numConfChecks: ' + solution.numConfChecks.toString());
+    console.log('Graph was colored with \'' + strategy +
+       '\' conflict checks: ' + solution.numConfChecks.toString() +
+       ' colors: ' + solution.numColors);
     const validString = solution.isValid(graph) ? 'valid' : 'invalid';
     console.log('Coloring is ' + validString + '!');
     this.isColored = true;

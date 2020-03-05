@@ -2,10 +2,12 @@ import { isNullOrUndefined } from 'util';
 
 export class ColoringSolution {
   coloring: Map<string, number>;
+  numColors: number;
   numConfChecks: number;
 
-  constructor(coloring: Map<string, number>, numChecks = 0) {
+  constructor(coloring: Map<string, number>, numColors: number, numChecks = 0) {
     this.coloring = coloring;
+    this.numColors = numColors;
     this.numConfChecks = numChecks;
   }
 

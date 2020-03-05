@@ -80,7 +80,7 @@ export class SimpleGreedyStrategy extends ColoringStrategy {
       }
     }
 
-    return new ColoringSolution(nodeColoring, this.numChecks);
+    return new ColoringSolution(nodeColoring, this.getLastColor(), this.numChecks);
   }
 
   public getID(): string {

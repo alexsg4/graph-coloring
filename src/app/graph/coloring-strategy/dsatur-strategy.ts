@@ -151,7 +151,7 @@ export class DSaturStrategy extends ColoringStrategy {
       nodeIds.splice(nodeIndex, 1);
       saturation.splice(nodeIndex, 1);
     }
-    return new ColoringSolution(nodeColoring, this.numChecks);
+    return new ColoringSolution(nodeColoring, this.getLastColor(), this.numChecks);
   }
 
   public getID(): string {

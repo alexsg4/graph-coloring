@@ -11,6 +11,7 @@ export abstract class ColoringStrategy {
   }
 
   protected Init() {
+    this.colorGenerator.colors.length = 0;
     this.generateUniqueColor();
     this.numChecks = 0;
   }
