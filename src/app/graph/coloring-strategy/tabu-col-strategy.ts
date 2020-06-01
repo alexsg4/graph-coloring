@@ -2,6 +2,7 @@ import { ColoringStrategy } from './coloring-strategy';
 import { DSaturStrategy } from './dsatur-strategy';
 import { ColoringSolution } from './coloring-solution';
 import { isUndefined, isNullOrUndefined } from 'util';
+import { Injectable } from "@angular/core";
 
 export class TabuConfig {
   maxChecks: number;
@@ -29,6 +30,7 @@ export class TabuConfig {
   }
 }
 
+@Injectable()
 export class TabuColStrategy extends ColoringStrategy {
 
   // TODO make user-configurable

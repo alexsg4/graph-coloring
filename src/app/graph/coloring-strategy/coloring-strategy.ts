@@ -1,8 +1,9 @@
 import { ColoringSolution } from './coloring-solution';
 import { ColorGeneratorService } from '../color-generator.service';
-import { Inject } from '@angular/core';
+import { Inject, Injectable } from '@angular/core';
 import { isNullOrUndefined } from 'util';
 
+@Injectable()
 export abstract class ColoringStrategy {
   protected numChecks = 0;
 

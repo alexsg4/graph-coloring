@@ -1,7 +1,9 @@
 import { ColoringStrategy } from './coloring-strategy';
 import { ColoringSolution } from './coloring-solution';
 import { isNullOrUndefined } from 'util';
+import { Injectable } from "@angular/core";
 
+@Injectable()
 export class DSaturStrategy extends ColoringStrategy {
 
   private isColorFeasible(
