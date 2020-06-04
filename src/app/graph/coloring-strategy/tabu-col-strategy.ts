@@ -1,10 +1,16 @@
 import { ColoringStrategy } from './coloring-strategy';
 import { DSaturStrategy } from './dsatur-strategy';
 import { ColoringSolution } from './coloring-solution';
-import { isUndefined, isNullOrUndefined } from 'util';
-import { Injectable } from "@angular/core";
+import { Injectable } from '@angular/core';
 
 export class TabuConfig {
+  /**
+   * A set of configuration parameters for the TabuCol algorithm
+   *
+   * @param maxChecks - max number of clash(conflict) checks
+   * @param colorTarget - initial max number of colors for the solution
+   */
+
   maxChecks: number;
   colorTarget: number;
   tenure: number;
@@ -14,13 +20,14 @@ export class TabuConfig {
   constructor(
     maxChecks = 10000000,
     colors = 2,
-    tenure = 1,
+    tenure = 1, // TODO make random variable
     freq = 15000,
     inc = 1) {
 
       this.Build(maxChecks, colors, tenure, freq, inc);
   }
 
+  /** Initializes the tabu config params with sane values */
   Build(maxChecks: number, colors: number, tenure: number, freq: number, inc: number) {
     this.maxChecks = maxChecks !== 0 ? Math.abs(Math.floor(maxChecks)) : 10000000;
     this.colorTarget = colors !== 0 ? Math.abs(Math.floor(colors)) : 2;
@@ -33,7 +40,7 @@ export class TabuConfig {
 @Injectable()
 export class TabuColStrategy extends ColoringStrategy {
 
-  // TODO make user-configurable
+  // TODO make user-configurable?
   private config: TabuConfig;
 
   protected Init() {
@@ -41,13 +48,21 @@ export class TabuColStrategy extends ColoringStrategy {
     this.config = new TabuConfig();
   }
 
+  /**
+   * Builds the initial solution using modified Greedy algo on a random
+   * permutation of the vertices, allowing only numColors color classes.
+   *
+   * @param graph - the graph we operate on
+   * @param coloring - the current coloring solution
+   * @param numColors - the number of color classes allowed
+   */
   private InitializeColoringForTabu(
     graph: any,
     coloring: Map<string, number>,
     numColors: number
   ) {
 
-    if (isNullOrUndefined(graph)) {
+    if (graph === null || graph === undefined) {
       console.error('No graph defined');
       return;
     }
@@ -59,6 +74,8 @@ export class TabuColStrategy extends ColoringStrategy {
     this.colorGenerator.resize(numColors + 1);
 
     let usedColors = new Array<boolean>(numColors + 1).fill(false);
+
+    // sanitize values outside of max color range
     for (const pair of coloring.entries()) {
       if (pair[1] < 1 || pair[1] > numColors) {
         coloring.set(pair[0], 1);
@@ -70,10 +87,12 @@ export class TabuColStrategy extends ColoringStrategy {
       const color = coloring.get(nodeId);
       for (const otherNodeId of nodeIds) {
         this.numChecks++;
-        if (nodeId !== otherNodeId && graph.hasEdgeBetween(nodeId, otherNodeId)) {
+        if (graph.hasEdgeBetween(nodeId, otherNodeId)) {
           usedColors[color] = true;
+          break;
         }
       }
+      // node is part of a clash so we randomly assign a different color to it
       if (usedColors[color]) {
         let newCol = Math.floor(Math.random() * numColors) + 1;
         for (let col = 1; col <= numColors; col++) {
@@ -87,6 +106,18 @@ export class TabuColStrategy extends ColoringStrategy {
     }
   }
 
+  /**
+   * Initializes the 'bookeeping' arrays for the tabu heuristic
+   *
+   * @param nodesByColor - keeps track of all node ids per color class as well as their total
+   * @param nbcPos - the order of every node in its color class sublist
+   * (i.e. column index on the line corresponding to its color in nodesByColor)
+   * @param conflicts - number of conflicts
+   * @param tabuStatus - keeps track of what moves are taboo and for how long
+   * @param graph - the graph we operate on
+   * @param coloring - the current coloring
+   * @param numColors - the number of color classes currently used
+   */
   private InitializeArrays(
     nodesByColor: any,
     nbcPos: any,
@@ -111,25 +142,44 @@ export class TabuColStrategy extends ColoringStrategy {
 
     for (let i = 0; i < n; i++) {
       const col = coloring.get(nodes[i].id);
+      // count the number of nodes per color class on the first column
       nodesByColor[col][0]++;
       nbcPos[i] = nodesByColor[col][0];
       nodesByColor[col][nbcPos[i]] = i;
     }
 
+    // init conflicts array
     for (let i = 0; i < n; i++) {
       for (let j = 0; j < n; j++) {
         this.numChecks++;
-        if (i !== j && graph.hasEdgeBetween(nodes[i].id, nodes[j].id)) {
+        if (graph.hasEdgeBetween(nodes[i].id, nodes[j].id)) {
           const col = coloring.get(nodes[j].id);
+          if (parseInt(nodes[i].id, 10) !== i || parseInt(nodes[j].id, 10) !== j) {
+            console.warn('Node ID different from index!');
+          }
           conflicts[col][i]++;
         }
       }
     }
   }
 
+  /**
+   * Move bestNode to color class bestColor
+   * @param bestNode - the node's integer index (not id)
+   * @param bestColor - the color class's index
+   * @param graph - graph
+   * @param coloring - current coloring
+   * @param nodesByColor
+   * @param conflicts
+   * @param nbcPos
+   * @param nodesInConflict
+   * @param confPos
+   * @param tabuStatus
+   * @param totalIter
+   */
   private MoveNodeToColor(
-    bestNode, bestColor, graph, coloring, nodesByColor, conflicts, nbcPos, nodesInConflict, confPos,
-    tabuStatus, totalIter) {
+    bestNode, bestColor, graph, coloring, nodesByColor, conflicts, nbcPos, nodesInConflict,
+    confPos, tabuStatus, totalIter) {
 
       const nodes = graph.nodes();
       const bestNodeId = nodes[bestNode].id;
@@ -145,8 +195,7 @@ export class TabuColStrategy extends ColoringStrategy {
       } else {
         this.numChecks += 2;
         // If bestNode becomes a conflict node, add it to the list
-        // TODO double check
-        if (!(conflicts[oldColor][bestNode] && conflicts[bestColor][bestNode])) {
+        if (conflicts[oldColor][bestNode] === 0 && conflicts[bestColor][bestNode] > 0) {
           nodesInConflict[0]++;
           confPos[bestNode] = nodesInConflict[0];
           nodesInConflict[confPos[bestNode]] = bestNode;
@@ -161,7 +210,7 @@ export class TabuColStrategy extends ColoringStrategy {
         // this works because we rebuild the graph with the correct ids
         const nbId = parseInt(nb, 10);
         conflicts[oldColor][nbId]--;
-        if (conflicts[oldColor][nbId] == 0 && coloring.get(nb.id) === oldColor) {
+        if (conflicts[oldColor][nbId] === 0 && coloring.get(nb) === oldColor) {
           // Remove nb from the list of conflicting nodes if there are 0 conflicts in
           // its own color
           confPos[nodesInConflict[nodesInConflict[0]]] = confPos[nbId];
@@ -170,7 +219,7 @@ export class TabuColStrategy extends ColoringStrategy {
         // Increase the number of conflicts in the new color
         this.numChecks++;
         conflicts[bestColor][nbId]++;
-        if (conflicts[bestColor][nb.id] == 1 && coloring.get(nb) === bestColor) {
+        if (conflicts[bestColor][nbId] === 1 && coloring.get(nb) === bestColor) {
           // Add nb from the list conflicting nodes if there is a new conflict in
           // its own color
           nodesInConflict[0]++;
@@ -205,7 +254,8 @@ export class TabuColStrategy extends ColoringStrategy {
     nodesInConflict[0] = 0;
     for (let i = 0; i < n; i++) {
       this.numChecks++;
-      const col = coloring.get(nodes[i].id);
+      const nodeID = nodes[i].id;
+      const col = coloring.get(nodeID);
       const nConflicts = conflicts[col][i];
       if (nConflicts > 0) {
         nodesInConflict[0]++;
@@ -238,7 +288,7 @@ export class TabuColStrategy extends ColoringStrategy {
       const nc = nodesInConflict[0];
 
       let bestNode = -1;
-      let bestCol = -1;
+      let bestCol = 0;
       let bestCost = n * n;
       let numBest = 0;
 
@@ -265,15 +315,15 @@ export class TabuColStrategy extends ColoringStrategy {
                 bestCost = newCost;
               }
             }
+            numBest += 1; // count the number of moves
           }
-
         }
       }
 
       // if we only found tabu moves, then take a random move
       if (bestNode === -1) {
         bestNode = Math.floor(Math.random() * n);
-        bestCol = Math.floor(Math.random() * numColors + 1);
+        bestCol = Math.floor(Math.random() * numColors) + 1;
         const col = coloring.get(nodes[bestNode].id);
 
         while (bestCol !== col) {
@@ -322,7 +372,7 @@ export class TabuColStrategy extends ColoringStrategy {
 
     let cost: number;
 
-    if (isNullOrUndefined(initialSolution)) {
+    if (initialSolution === null || initialSolution === undefined) {
       console.error('Could not color graph with initial algo!');
     }
 
@@ -331,9 +381,8 @@ export class TabuColStrategy extends ColoringStrategy {
     const coloring = bestColoring;
     let numColors = this.getLastColor(); // the number of unique colors used in the initial solution
 
-    numColors--;
-    while (this.numChecks < this.config.maxChecks && numColors + 1 > this.config.colorTarget) {
-      coloring.forEach((v, k) => coloring.set(k, 0));
+    while (this.numChecks < this.config.maxChecks && numColors > this.config.colorTarget) {
+      coloring.forEach((v, k) => coloring.set(k, 1));
       cost = this.Tabu(graph, coloring, numColors);
       if (cost === 0) {
         bestColoring = coloring;
