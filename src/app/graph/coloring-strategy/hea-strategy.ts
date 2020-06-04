@@ -3,12 +3,17 @@ import { DSaturStrategy } from './dsatur-strategy';
 import { ColoringSolution } from './coloring-solution';
 import { Injectable } from '@angular/core';
 
-export class TabuConfig {
+// tslint:disable:no-redundant-jsdoc
+
+export class HEAConfig {
   /**
-   * A set of configuration parameters for the TabuCol algorithm
+   * A set of configuration parameters for the Hybrid Evolutionary algorithm
    *
    * @param maxChecks - max number of clash(conflict) checks
    * @param colorTarget - initial max number of colors for the solution
+   * @param popSize - population size
+   * @param maxTabuIter - number of tabu search iterations per cycle
+   * (will be multiplied by number of nodes)
    */
 
   maxChecks: number;
@@ -16,12 +21,15 @@ export class TabuConfig {
   tenure: number;
   frequency: number;
   increment: number;
+  popSize: number;
+  maxTabuIter: number;
 
   constructor(
     maxChecks = 5000000,
     colors = 2,
     freq = 15000,
-    inc = 1) {
+    inc = 1,
+    ) {
 
       this.Build(maxChecks, colors, freq, inc);
   }
@@ -33,17 +41,21 @@ export class TabuConfig {
     this.tenure = Math.floor(Math.random() * 9);
     this.frequency = freq !== 0 ? Math.abs(Math.floor(freq)) : 15000;
     this.increment = inc !== 0 ? Math.abs(Math.floor(inc)) : 1;
+
+    // TODO tweak magic numbers (sane defaults based on the literature)
+    this.popSize = 10;
+    this.maxTabuIter = 16;
   }
 }
 
 @Injectable()
-export class TabuColStrategy extends ColoringStrategy {
+export class HEAStrategy extends ColoringStrategy {
 
-  private config: TabuConfig;
+  private config: HEAConfig;
 
   protected Init() {
     super.Init();
-    this.config = new TabuConfig();
+    this.config = new HEAConfig();
   }
 
   /**
@@ -83,16 +95,16 @@ export class TabuColStrategy extends ColoringStrategy {
 
     for (const nodeId of nodeIdsShuffled) {
       usedColors = usedColors.map(el => false);
+      const color = coloring.get(nodeId);
       for (const otherNodeId of nodeIds) {
         this.numChecks++;
         if (graph.hasEdgeBetween(nodeId, otherNodeId)) {
-          const color = coloring.get(otherNodeId);
           usedColors[color] = true;
+          break;
         }
       }
       // node is part of a clash so we randomly assign a different color to it
-      const currentCol = coloring.get(nodeId);
-      if (usedColors[currentCol]) {
+      if (usedColors[color]) {
         let newCol = Math.floor(Math.random() * numColors) + 1;
         for (let col = 1; col <= numColors; col++) {
           if (!usedColors[col]) {
@@ -105,6 +117,7 @@ export class TabuColStrategy extends ColoringStrategy {
     }
   }
 
+  // TODO
   /**
    * Initializes the 'bookeeping' arrays for the tabu heuristic
    *
@@ -279,7 +292,7 @@ export class TabuColStrategy extends ColoringStrategy {
     let currentIter = 0;
     let totalIter = 0;
 
-    // TABU LOOP
+    // tabu loop
     while (this.numChecks < this.config.maxChecks) {
       currentIter++;
       totalIter++;
@@ -287,7 +300,7 @@ export class TabuColStrategy extends ColoringStrategy {
       const nc = nodesInConflict[0];
 
       let bestNode = -1;
-      let bestCol = -1;
+      let bestCol = 0;
       let bestCost = n * n;
       let numBest = 0;
 
@@ -307,6 +320,7 @@ export class TabuColStrategy extends ColoringStrategy {
             }
             if (tabuStatus[node][c] < totalIter || newCost < bestCost) {
               // Select the nth move with probability 1/n
+              // TODO tweak
               if (Math.floor(Math.random() * (numBest + 1)) === 0) {
                 bestNode = node;
                 bestCol = c;
@@ -325,7 +339,7 @@ export class TabuColStrategy extends ColoringStrategy {
         const col = coloring.get(nodes[bestNode].id);
 
         while (bestCol !== col) {
-          bestCol = Math.floor(Math.random() * numColors) + 1;
+          bestCol = Math.floor(Math.random() * numColors + 1);
           this.numChecks += 2;
           bestCost = cost + conflicts[bestCol][bestNode] - conflicts[col][bestNode];
         }
@@ -352,7 +366,7 @@ export class TabuColStrategy extends ColoringStrategy {
         currentIter = 0;
       }
     }
-    return bestSolValue;
+    return cost;
   }
 
   /**
@@ -366,44 +380,117 @@ export class TabuColStrategy extends ColoringStrategy {
       return;
     }
 
-    // initialize the tabu algorithm params
+    // initialize the algorithm params
     this.Init();
 
+    const n = graph.getNodesCount();
+    const parents = new Array<number>(2).fill(0);
+    this.config.maxTabuIter = this.config.maxTabuIter * n;
+
+    // a population is comprised of colorings
+    const population = new Array<Map<string, number>>(this.config.popSize).fill(
+      new Map<string, number>()
+    );
+    const popCosts = new Array<number>(this.config.popSize);
+
+    // final population after local search
+    let osp = new Map<string, number>();
+
+    // generate the initial solution using DSatur
     const constructiveAlgo = new DSaturStrategy(this.colorGenerator);
     const initialSolution = constructiveAlgo.generateSolution(graph);
-
-    let cost: number;
-
     if (initialSolution === null || initialSolution === undefined) {
       console.error('Could not color graph with initial algo!');
     }
-
-    this.numChecks += initialSolution.numConfChecks;
+    this.numChecks = initialSolution.numConfChecks;
     let bestColoring = initialSolution.coloring;
-    const coloring = new Map(bestColoring);
+
+    const coloring = bestColoring;
     // the number of unique colors used in the initial solution
     let numColors = this.getNumberOfColors();
 
-    numColors--;
-    while (this.numChecks < this.config.maxChecks && numColors + 1 > this.config.colorTarget) {
-      coloring.forEach((v, k) => coloring.set(k, 0));
-      cost = this.Tabu(graph, coloring, numColors);
-      if (cost === 0) {
-        bestColoring = new Map(coloring);
-        // shift colors to start from 0
-        bestColoring.forEach((v, k) => bestColoring.set(k, v - 1));
+    numColors -= 1;
 
-        if (numColors <= this.config.colorTarget) {
+    // cache main loop vars
+    let cost = 0;
+    let foundSol = false;
+
+    // MAIN LOOP
+    while (this.numChecks < this.config.maxChecks && numColors + 1 > this.config.colorTarget) {
+      foundSol = false;
+
+      // build the initial population
+      for (let i = 0; i < this.config.popSize; i++) {
+        // TODO implement
+        this.InitializeColoringForHEA(graph, population[i], numColors);
+
+        // TODO implement
+        // check for optimal solution
+        if (this.isSolOptimal(population[i], graph, numColors)) {
+          foundSol = true;
+          osp = population[i];
+          break;
+        }
+        // check for max checks limit and save current solution
+        if (this.numChecks > this.config.maxChecks) {
+          osp = population[i];
+          break;
+        }
+
+        // improve it via tabu search
+        popCosts[i] = this.Tabu(graph, population[i], numColors);
+
+        // check for optimal solution after tabu
+        if (popCosts[i] === 0) {
+          foundSol = true;
+          osp = population[i];
+          break;
+        }
+        // check for max checks limit and save current solution
+        if (this.numChecks > this.config.maxChecks) {
+          osp = population[i];
           break;
         }
       }
+
+      // Evolve the population
+      let cost = 1;
+      let bestCost = Number.MAX_SAFE_INTEGER;
+
+      // EVOLUTIONARY LOOP
+      while (this.numChecks < this.config.maxChecks && !foundSol) {
+
+        // DO CROSSOVER TODO - write about type - TODO implement
+        this.crossover(osp, parents, graph, numColors, population);
+
+        // improve offspring via tabu search
+        cost = this.Tabu(graph, osp, numColors);
+
+        // replace weakest parent with offspring
+        // TODO implement
+        this.replace(population, parents, osp, popCosts, graph, cost);
+
+        if (cost < bestCost) {
+          bestCost = cost;
+        }
+        if (bestCost === 0) {
+          foundSol = true;
+        }
+      }
+
+      if (foundSol) {
+        bestColoring = osp;
+        break;
+      } else {
+        console.warn('No solution was found using ', this.getID(), ' reverting to constructive algo sol.');
+      }
+
       numColors--;
     }
-
     return new ColoringSolution(bestColoring, numColors + 1, this.numChecks);
   }
 
   public getID(): string {
-    return 'tabuCol';
+    return 'hea';
   }
 }
