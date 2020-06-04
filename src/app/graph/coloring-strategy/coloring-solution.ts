@@ -12,7 +12,16 @@ export class ColoringSolution {
    */
   constructor(coloring: Map<string, number>, numColors: number, numChecks = 0) {
     this.coloring = coloring;
-    this.numColors = numColors;
+
+    const uniqueColors = new Set<number>();
+    for (const col of coloring.values()) {
+      uniqueColors.add(col);
+    }
+    if (numColors !== uniqueColors.size) {
+      console.warn('Solution was iniitalized with the wrong number of color classes. Correcting...')
+    }
+
+    this.numColors = uniqueColors.size;
     this.numConfChecks = numChecks;
   }
 
