@@ -18,20 +18,19 @@ export class TabuConfig {
   increment: number;
 
   constructor(
-    maxChecks = 10000000,
+    maxChecks = 5000000,
     colors = 2,
-    tenure = 1, // TODO make random variable
     freq = 15000,
     inc = 1) {
 
-      this.Build(maxChecks, colors, tenure, freq, inc);
+      this.Build(maxChecks, colors, freq, inc);
   }
 
   /** Initializes the tabu config params with sane values */
-  Build(maxChecks: number, colors: number, tenure: number, freq: number, inc: number) {
+  Build(maxChecks: number, colors: number, freq: number, inc: number) {
     this.maxChecks = maxChecks !== 0 ? Math.abs(Math.floor(maxChecks)) : 10000000;
     this.colorTarget = colors !== 0 ? Math.abs(Math.floor(colors)) : 2;
-    this.tenure = tenure !== 0 ? Math.abs(Math.floor(tenure)) : 1;
+    this.tenure = Math.floor(Math.random() * 9);
     this.frequency = freq !== 0 ? Math.abs(Math.floor(freq)) : 15000;
     this.increment = inc !== 0 ? Math.abs(Math.floor(inc)) : 1;
   }
@@ -40,7 +39,6 @@ export class TabuConfig {
 @Injectable()
 export class TabuColStrategy extends ColoringStrategy {
 
-  // TODO make user-configurable?
   private config: TabuConfig;
 
   protected Init() {
@@ -77,7 +75,8 @@ export class TabuColStrategy extends ColoringStrategy {
 
     // sanitize values outside of max color range
     for (const pair of coloring.entries()) {
-      if (pair[1] < 1 || pair[1] > numColors) {
+      const color = pair[1];
+      if (color < 1 || color > numColors) {
         coloring.set(pair[0], 1);
       }
     }
@@ -357,6 +356,10 @@ export class TabuColStrategy extends ColoringStrategy {
     return cost;
   }
 
+  /**
+   * Initializes and runs the tabuCol algorithm to generate a solution
+   * @param graph
+   */
   public generateSolution(graph: any): ColoringSolution {
     console.log('Color ' + this.getID());
     if (graph === null) {
@@ -364,9 +367,9 @@ export class TabuColStrategy extends ColoringStrategy {
       return;
     }
 
+    // initialize the tabu algorithm params
     this.Init();
 
-    const nodesCount = graph.getNodesCount();
     const constructiveAlgo = new DSaturStrategy(this.colorGenerator);
     const initialSolution = constructiveAlgo.generateSolution(graph);
 
@@ -379,12 +382,14 @@ export class TabuColStrategy extends ColoringStrategy {
     this.numChecks += initialSolution.numConfChecks;
     let bestColoring = initialSolution.coloring;
     const coloring = bestColoring;
-    let numColors = this.getLastColor(); // the number of unique colors used in the initial solution
+    // the number of unique colors used in the initial solution
+    let numColors = this.getNumberOfColors();
 
     while (this.numChecks < this.config.maxChecks && numColors > this.config.colorTarget) {
-      coloring.forEach((v, k) => coloring.set(k, 1));
+      coloring.forEach((v, k) => coloring.set(k, 0));
       cost = this.Tabu(graph, coloring, numColors);
       if (cost === 0) {
+        coloring.forEach((v, k) => coloring.set(k, v - 1));
         bestColoring = coloring;
         if (numColors <= this.config.colorTarget) {
           break;

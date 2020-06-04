@@ -39,10 +39,10 @@ export abstract class ColoringStrategy {
   }
 
   /**
-   * Get the last color's index
+   * Get the number of unique colors generated
    */
-  protected getLastColor(): number {
-    return this.colorGenerator.getNumColors() - 1;
+  protected getNumberOfColors(): number {
+    return this.colorGenerator.getNumColors();
   }
 
   /**

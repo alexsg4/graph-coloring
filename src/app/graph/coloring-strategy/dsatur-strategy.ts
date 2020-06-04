@@ -1,11 +1,14 @@
 import { ColoringStrategy } from './coloring-strategy';
 import { ColoringSolution } from './coloring-solution';
-import { isNullOrUndefined } from 'util';
-import { Injectable } from "@angular/core";
+import { Injectable } from '@angular/core';
 
 @Injectable()
 export class DSaturStrategy extends ColoringStrategy {
 
+  /**
+   * Checks if a color can be assigned to a node given the current (partial) coloring
+   * i.e. there are no neighbours of node having color c
+   */
   private isColorFeasible(
     color: number,
     node: string,
@@ -15,31 +18,23 @@ export class DSaturStrategy extends ColoringStrategy {
 
     this.numChecks++;
 
-    let numColoredNodes = 0;
-    for (const entry of graphColoring.entries()) {
-      if (entry[1] === color) {
-        numColoredNodes++;
+    for (const coloredNode of graphColoring.keys()) {
+      this.numChecks++;
+      if (graphColoring.get(coloredNode) === color && graph.hasEdgeBetween(node, coloredNode)) {
+        return false;
       }
     }
-    if (numColoredNodes > graph.degree(node)) {
-      for (const adj of graph.getAdjList(node)) {
-        this.numChecks++;
-        if (graphColoring.get(adj) === color) {
-          return false;
-        }
-      }
-      return true;
-    } else {
-      for (const coloredNode of graphColoring.keys()) {
-        this.numChecks++;
-        if (graphColoring.get(coloredNode) === color && graph.hasEdgeBetween(node, coloredNode)) {
-          return false;
-        }
-      }
-      return true;
-    }
+    return true;
   }
 
+  /**
+   * Try to assign a color to a node and return the status of the operation's success
+   * @param graph
+   * @param nodeIndex
+   * @param nodeIds
+   * @param saturation
+   * @param nodeColoring
+   */
   private assignColorDSatur(
     graph,
     nodeIndex: number,
@@ -55,7 +50,7 @@ export class DSaturStrategy extends ColoringStrategy {
     }
     const node = nodeIds[nodeIndex];
 
-    for (let color = 0; color < this.getLastColor(); color++) {
+    for (let color = 0; color < this.getNumberOfColors(); color++) {
       if (this.isColorFeasible(color, node, nodeColoring, graph)) {
         foundColor = true;
         nodeColoring.set(node, color);
@@ -88,7 +83,7 @@ export class DSaturStrategy extends ColoringStrategy {
 
   public generateSolution(graph: any): ColoringSolution {
     console.log('Color ' + this.getID());
-    if (isNullOrUndefined(graph)) {
+    if (graph === null || graph === undefined) {
       console.error('No graph defined');
       return;
     }
@@ -117,7 +112,10 @@ export class DSaturStrategy extends ColoringStrategy {
     // keep track of each node's saturation
     const saturation = new Array<number>(nodesCount).fill(0);
 
-    let color = this.generateUniqueColor();
+    let color = this.getNumberOfColors() - 1;
+    if (color < 0) {
+      console.error('Initial color has not been generated!');
+    }
     const node = nodeIds.pop();
     nodeColoring.set(node, color);
     saturation.pop();
@@ -153,7 +151,7 @@ export class DSaturStrategy extends ColoringStrategy {
       nodeIds.splice(nodeIndex, 1);
       saturation.splice(nodeIndex, 1);
     }
-    return new ColoringSolution(nodeColoring, this.getLastColor(), this.numChecks);
+    return new ColoringSolution(nodeColoring, this.getNumberOfColors(), this.numChecks);
   }
 
   public getID(): string {

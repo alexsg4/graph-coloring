@@ -1,48 +1,35 @@
 import { ColoringStrategy } from './coloring-strategy';
 import { ColoringSolution } from './coloring-solution';
-import { isNullOrUndefined } from 'util';
-import { Injectable } from "@angular/core";
+import { Injectable } from '@angular/core';
 
 @Injectable()
 export class SimpleGreedyStrategy extends ColoringStrategy {
 
+  /**
+   * Checks if a color can be assigned to a node given the current (partial) coloring
+   * i.e. there are no neighbours of node having color c
+   */
   private isColorFeasible(
     color: number,
     node: string,
     graphColoring: Map<string, number>,
-    graph: any
-    ): boolean {
+    graph
+  ): boolean {
 
     this.numChecks++;
 
-    let numColoredNodes = 0;
-    for (const entry of graphColoring.entries()) {
-      if (entry[1] === color) {
-        numColoredNodes++;
+    for (const coloredNode of graphColoring.keys()) {
+      this.numChecks++;
+      if (graphColoring.get(coloredNode) === color && graph.hasEdgeBetween(node, coloredNode)) {
+        return false;
       }
     }
-    if (numColoredNodes > graph.degree(node)) {
-      for (const adj of graph.getAdjList(node)) {
-        this.numChecks++;
-        if (graphColoring.get(adj) === color) {
-          return false;
-        }
-      }
-      return true;
-    } else {
-      for (const coloredNode of graphColoring.keys()) {
-        this.numChecks++;
-        if (graphColoring.get(coloredNode) === color && graph.hasEdgeBetween(node, coloredNode)) {
-          return false;
-        }
-      }
-      return true;
-    }
+    return true;
   }
 
   public generateSolution(graph: any): ColoringSolution {
     console.log('Color SimpleGreedy!');
-    if (isNullOrUndefined(graph)) {
+    if (graph === null || graph === undefined) {
       console.error('No graph defined');
       return;
     }
@@ -59,18 +46,17 @@ export class SimpleGreedyStrategy extends ColoringStrategy {
 
     const nodeColoring = new Map<string, number>();
 
-    let color = this.getLastColor();
+    let color = this.getNumberOfColors() - 1;
     nodeColoring.set(nodeIds[0], color);
 
     let j = 0;
     for (const node of nodeIds) {
-      // skip first element - TODO check if we can init cand sol in the loops
       if (node === nodeIds[0]) {
         continue;
       }
       const numColoredNodes = nodeColoring.size;
       for (j = 0; j < numColoredNodes; j++) {
-        color = this.getLastColor();
+        color = this.getNumberOfColors() - 1;
         if (this.isColorFeasible(color, node, nodeColoring, graph)) {
           nodeColoring.set(node, color);
           break;
@@ -82,7 +68,7 @@ export class SimpleGreedyStrategy extends ColoringStrategy {
       }
     }
 
-    return new ColoringSolution(nodeColoring, this.getLastColor(), this.numChecks);
+    return new ColoringSolution(nodeColoring, this.getNumberOfColors(), this.numChecks);
   }
 
   public getID(): string {
