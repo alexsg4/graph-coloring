@@ -27,7 +27,7 @@ export class ColoringSolution {
       return undefined;
     }
 
-    if (isNullOrUndefined(graph)) {
+    if (graph === null || graph === undefined) {
       console.error('isSolutionValid: graph is null or undefined.');
       return undefined;
     }
