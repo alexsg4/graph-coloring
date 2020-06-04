@@ -1,12 +1,13 @@
 import { Injectable, Inject } from '@angular/core';
 import { ColoringStrategy } from './coloring-strategy/coloring-strategy';
+import { isNullOrUndefined } from 'util';
 
 @Injectable()
 export class ColoringService {
   constructor(@Inject(ColoringStrategy) private strategies: Array<ColoringStrategy>) { }
 
   applyColoringStrategy(graph: any, strategyId: string) {
-    if (graph === null) {
+    if (isNullOrUndefined(graph)) {
       console.error('Graph is null!');
       return null;
     }
@@ -14,7 +15,7 @@ export class ColoringService {
       return strategyToFind.getID() === strategyId;
     });
 
-    if (strategy === undefined) {
+    if (isNullOrUndefined(strategy)) {
       console.warn('Strategy ' + strategyId + 'does not exist!');
       return null;
     }

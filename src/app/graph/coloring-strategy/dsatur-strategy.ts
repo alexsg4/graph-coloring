@@ -1,33 +1,41 @@
 import { ColoringStrategy } from './coloring-strategy';
+import { ColoringSolution } from './coloring-solution';
+import { Injectable } from '@angular/core';
 
+@Injectable()
 export class DSaturStrategy extends ColoringStrategy {
 
+  /**
+   * Checks if a color can be assigned to a node given the current (partial) coloring
+   * i.e. there are no neighbours of node having color c
+   */
   private isColorFeasible(
     color: number,
-    candSol: Map<number, Array<string>>,
     node: string,
     graphColoring: Map<string, number>,
     graph
   ): boolean {
-      if (candSol.get(color).length > graph.degree(node)) {
-      for (const adj of graph.getAdjList(node)) {
-        if (graphColoring.get(adj) === color) {
-          return false;
-        }
+
+    this.numChecks++;
+
+    for (const coloredNode of graphColoring.keys()) {
+      this.numChecks++;
+      if (graphColoring.get(coloredNode) === color && graph.hasEdgeBetween(node, coloredNode)) {
+        return false;
       }
-      return true;
-    } else {
-      for (const coloredNode of candSol.get(color)) {
-        if (graph.hasEdgeBetween(node, coloredNode)) {
-          return false;
-        }
-      }
-      return true;
     }
+    return true;
   }
 
+  /**
+   * Try to assign a color to a node and return the status of the operation's success
+   * @param graph
+   * @param nodeIndex
+   * @param nodeIds
+   * @param saturation
+   * @param nodeColoring
+   */
   private assignColorDSatur(
-    candSol: Map<number, Array<string>>,
     graph,
     nodeIndex: number,
     nodeIds: Array<string>,
@@ -42,18 +50,19 @@ export class DSaturStrategy extends ColoringStrategy {
     }
     const node = nodeIds[nodeIndex];
 
-    for (const color of candSol.keys()) {
-      if (this.isColorFeasible(color, candSol, node, nodeColoring, graph)) {
+    for (let color = 0; color < this.getNumberOfColors(); color++) {
+      if (this.isColorFeasible(color, node, nodeColoring, graph)) {
         foundColor = true;
-        candSol.get(color).push(node);
         nodeColoring.set(node, color);
 
         // update saturation degrees
         for (let i = 0; i < saturation.length; i++) {
+          this.numChecks++;
           if (graph.hasEdgeBetween(node, nodeIds[i])) {
             alreadyAdj = false;
-            for (const coloredNode of candSol.get(color)) {
-              if (graph.hasEdgeBetween(coloredNode, nodeIds[i])) {
+            for (const coloredNode of nodeColoring.keys()) {
+              this.numChecks++;
+              if (nodeColoring.get(coloredNode) === color && graph.hasEdgeBetween(coloredNode, nodeIds[i])) {
                 alreadyAdj = true;
                 break;
               }
@@ -72,12 +81,14 @@ export class DSaturStrategy extends ColoringStrategy {
     return false;
   }
 
-  public generateSolution(graph: any): Map<number, Array<string>> {
+  public generateSolution(graph: any): ColoringSolution {
     console.log('Color ' + this.getID());
-    if (graph === null) {
+    if (graph === null || graph === undefined) {
       console.error('No graph defined');
       return;
     }
+
+    this.Init();
 
     // init and shuffle array of node indices
     const nodeIds = new Array<string>(graph.getNodesCount());
@@ -89,7 +100,7 @@ export class DSaturStrategy extends ColoringStrategy {
     this.shuffleArray(nodeIds);
 
     // then sort based on degree
-    // usually this is implemented as a nlogn STABLE sort, not sure we need the shuffle
+    // usually this is implemented as a O(n*log(n)) STABLE sort
     nodeIds.sort((lhs: string, rhs: string) => {
       return (graph.degree(lhs) - graph.degree(rhs));
     });
@@ -101,14 +112,15 @@ export class DSaturStrategy extends ColoringStrategy {
     // keep track of each node's saturation
     const saturation = new Array<number>(nodesCount).fill(0);
 
-    const candSol = new Map<number, Array<string>>();
-    let color = this.generateUniqueColor();
-    candSol.set(color, new Array<string>());
+    let color = this.getNumberOfColors() - 1;
+    if (color < 0) {
+      console.error('Initial color has not been generated!');
+    }
     const node = nodeIds.pop();
-    candSol.get(color).push(node);
     nodeColoring.set(node, color);
     saturation.pop();
     for (let i = 0; i < saturation.length; i++) {
+      this.numChecks++;
       if (graph.hasEdgeBetween(node, nodeIds[i])) {
         saturation[i]++;
       }
@@ -124,12 +136,10 @@ export class DSaturStrategy extends ColoringStrategy {
           nodeIndex = i;
         }
       }
-      const foundColor = this.assignColorDSatur(candSol, graph, nodeIndex, nodeIds, saturation, nodeColoring);
+      const foundColor = this.assignColorDSatur(graph, nodeIndex, nodeIds, saturation, nodeColoring);
       if (!foundColor) {
         color = this.generateUniqueColor();
-        candSol.set(color, new Array<string>());
         const currentNode = nodeIds[nodeIndex];
-        candSol.get(color).push(currentNode);
         nodeColoring.set(currentNode, color);
 
         for (let i = 0; i < nodeIds.length; i++) {
@@ -140,11 +150,8 @@ export class DSaturStrategy extends ColoringStrategy {
       }
       nodeIds.splice(nodeIndex, 1);
       saturation.splice(nodeIndex, 1);
-
     }
-
-
-    return candSol;
+    return new ColoringSolution(nodeColoring, this.getNumberOfColors(), this.numChecks);
   }
 
   public getID(): string {

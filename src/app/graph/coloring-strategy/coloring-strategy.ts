@@ -1,44 +1,61 @@
+import { ColoringSolution } from './coloring-solution';
+import { ColorGeneratorService } from '../color-generator.service';
+import { Inject, Injectable } from '@angular/core';
+
+@Injectable()
 export abstract class ColoringStrategy {
-  protected colors = new Array<number>();
+  protected numChecks = 0;
 
-  constructor() {
-    // TODO reset colors before/after generating a solution
-    this.colors.length = 0;
+  constructor(@Inject(ColorGeneratorService) protected colorGenerator: ColorGeneratorService) {
+    this.Init();
+  }
+
+  /**
+   * Reset the color generator and generate one color
+   */
+  protected Init() {
+    this.colorGenerator.colors.length = 0;
     this.generateUniqueColor();
+    this.numChecks = 0;
   }
 
-  protected generateUniqueColor(): number {
-    const min = 0x555555;
-    const max = 0xdddddd;
-    let generatedColor = Math.floor(Math.random() * (max - min)) + min;
-    while (this.colors.includes(generatedColor)) {
-      generatedColor = Math.floor(Math.random() * (max - min)) + min;
-    }
-    this.colors.push(generatedColor);
-    return generatedColor;
-  }
+  /**
+   * Generate a coloring solution - overridden by child strategy
+   * @param graph - graph to operate on
+   */
+  abstract generateSolution(graph: any): ColoringSolution;
 
-  abstract generateSolution(graph: any): Map<number, Array<string>>;
-
-  isSolutionValid(solution: Map<number, Array<string>>, graph: any): boolean {
-    // TODO add solution validation logic
-    return true;
-  }
-
+  /**
+   * Store and return the strategy's identifier string
+   * - overridden by child
+   */
   abstract getID(): string;
 
-  protected getLast<T>(array: Array<T>): T {
-    if (array.length === 0) {
-      return null;
-    }
-    return array[array.length - 1];
+  /**
+   * Get a unique color from the generator service
+   */
+  protected generateUniqueColor(): number {
+    return this.colorGenerator.generateColor();
   }
 
-  protected getLastColor(): number {
-    return this.getLast(this.colors);
+  /**
+   * Get the number of unique colors generated
+   */
+  protected getNumberOfColors(): number {
+    return this.colorGenerator.getNumColors();
   }
 
-  // Fisher-Yates shuffle
+  /**
+   * Get a color's hex value by index (when possible)
+   */
+  public getColorById(id: number) {
+    return this.colorGenerator.getColorByIndex(id);
+  }
+
+  /**
+   * Apply a Fisher-Yates in-place shuffle to an array
+   * @param array - array that's modified in place
+   */
   protected shuffleArray<T>(array: Array<T>): void {
     for (let i = array.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * i);
