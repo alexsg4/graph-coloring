@@ -7,7 +7,10 @@ import * as gen from 'color-generator';
 export class ColorGeneratorService {
   colors: string[];
 
-  // generate a unique color and return its id
+  /**
+   * Generate a unique color and return its index
+   * (length of the colors array - 1)
+   */
   public generateColor(): number {
     let color = gen().hexString();
     while (this.colors.includes(color)) {
@@ -17,6 +20,10 @@ export class ColorGeneratorService {
     return this.colors.length - 1;
   }
 
+  /**
+   * Return a color's hex value given an index (when possible)
+   * @param index positive integer, index of the desired color
+   */
   public getColorByIndex(index: number): string {
     if (index >= 0 && index < this.colors.length) {
       return this.colors[index];
@@ -24,12 +31,20 @@ export class ColorGeneratorService {
     return undefined;
   }
 
+  /**
+   * Fill the colors array with up to numColors color classes
+   * @param numColors - new size of the array
+   */
   public fill(numColors: number) {
     for (let i = 0; i < numColors; i++) {
       this.generateColor();
     }
   }
 
+  /**
+   * Shrink or fill the colors array to contain exactly numColors color classes
+   * @param numColors - desired number of colors
+   */
   public resize(numColors: number) {
     if (numColors <= 0) {
       console.warn('Invalid num colors.');
@@ -46,6 +61,9 @@ export class ColorGeneratorService {
     }
   }
 
+  /**
+   * Get the size of the colors array
+   */
   public getNumColors(): number {
     return this.colors.length;
   }
