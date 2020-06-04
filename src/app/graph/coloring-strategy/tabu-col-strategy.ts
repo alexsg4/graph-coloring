@@ -83,16 +83,16 @@ export class TabuColStrategy extends ColoringStrategy {
 
     for (const nodeId of nodeIdsShuffled) {
       usedColors = usedColors.map(el => false);
-      const color = coloring.get(nodeId);
       for (const otherNodeId of nodeIds) {
         this.numChecks++;
         if (graph.hasEdgeBetween(nodeId, otherNodeId)) {
+          const color = coloring.get(otherNodeId);
           usedColors[color] = true;
-          break;
         }
       }
       // node is part of a clash so we randomly assign a different color to it
-      if (usedColors[color]) {
+      const currentCol = coloring.get(nodeId);
+      if (usedColors[currentCol]) {
         let newCol = Math.floor(Math.random() * numColors) + 1;
         for (let col = 1; col <= numColors; col++) {
           if (!usedColors[col]) {
@@ -279,7 +279,7 @@ export class TabuColStrategy extends ColoringStrategy {
     let currentIter = 0;
     let totalIter = 0;
 
-    // tabu loop
+    // TABU LOOP
     while (this.numChecks < this.config.maxChecks) {
       currentIter++;
       totalIter++;
@@ -287,7 +287,7 @@ export class TabuColStrategy extends ColoringStrategy {
       const nc = nodesInConflict[0];
 
       let bestNode = -1;
-      let bestCol = 0;
+      let bestCol = -1;
       let bestCost = n * n;
       let numBest = 0;
 
@@ -307,7 +307,6 @@ export class TabuColStrategy extends ColoringStrategy {
             }
             if (tabuStatus[node][c] < totalIter || newCost < bestCost) {
               // Select the nth move with probability 1/n
-              // TODO tweak
               if (Math.floor(Math.random() * (numBest + 1)) === 0) {
                 bestNode = node;
                 bestCol = c;
@@ -326,7 +325,7 @@ export class TabuColStrategy extends ColoringStrategy {
         const col = coloring.get(nodes[bestNode].id);
 
         while (bestCol !== col) {
-          bestCol = Math.floor(Math.random() * numColors + 1);
+          bestCol = Math.floor(Math.random() * numColors) + 1;
           this.numChecks += 2;
           bestCost = cost + conflicts[bestCol][bestNode] - conflicts[col][bestNode];
         }
@@ -353,7 +352,7 @@ export class TabuColStrategy extends ColoringStrategy {
         currentIter = 0;
       }
     }
-    return cost;
+    return bestSolValue;
   }
 
   /**
