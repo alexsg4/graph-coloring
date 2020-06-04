@@ -381,22 +381,26 @@ export class TabuColStrategy extends ColoringStrategy {
 
     this.numChecks += initialSolution.numConfChecks;
     let bestColoring = initialSolution.coloring;
-    const coloring = bestColoring;
+    const coloring = new Map(bestColoring);
     // the number of unique colors used in the initial solution
     let numColors = this.getNumberOfColors();
 
-    while (this.numChecks < this.config.maxChecks && numColors > this.config.colorTarget) {
+    numColors--;
+    while (this.numChecks < this.config.maxChecks && numColors + 1 > this.config.colorTarget) {
       coloring.forEach((v, k) => coloring.set(k, 0));
       cost = this.Tabu(graph, coloring, numColors);
       if (cost === 0) {
-        coloring.forEach((v, k) => coloring.set(k, v - 1));
-        bestColoring = coloring;
+        bestColoring = new Map(coloring);
+        // shift colors to start from 0
+        bestColoring.forEach((v, k) => bestColoring.set(k, v - 1));
+
         if (numColors <= this.config.colorTarget) {
           break;
         }
       }
       numColors--;
     }
+
     return new ColoringSolution(bestColoring, numColors + 1, this.numChecks);
   }
 
