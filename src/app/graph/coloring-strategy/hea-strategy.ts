@@ -221,7 +221,6 @@ export class HEAStrategy extends ColoringStrategy {
     return true;
   }
 
-  // TODO
   /**
    * Initializes the 'bookeeping' arrays for the tabu heuristic
    *
@@ -285,17 +284,16 @@ export class HEAStrategy extends ColoringStrategy {
    * @param bestColor - the color class's index
    * @param graph - graph
    * @param coloring - current coloring
-   * @param nodesByColor
    * @param conflicts
-   * @param nbcPos
    * @param nodesInConflict
    * @param confPos
    * @param tabuStatus
    * @param totalIter
+   * @param tenure - tabu tenure
    */
   private MoveNodeToColor(
-    bestNode, bestColor, graph, coloring, nodesByColor, conflicts, nbcPos, nodesInConflict,
-    confPos, tabuStatus, totalIter) {
+    bestNode, bestColor, graph, coloring, conflicts, nodesInConflict,
+    confPos, tabuStatus, totalIter, tenure) {
 
       const nodes = graph.nodes();
       const bestNodeId = nodes[bestNode].id;
@@ -350,11 +348,8 @@ export class HEAStrategy extends ColoringStrategy {
   private Tabu(
     graph: any,
     coloring: Map<string, number>,
-    numColors: number,
+    numColors: number
   ): number {
-
-    this.InitializeColoringForHEA(graph, coloring, numColors);
-    let cost = 0;
 
     const n = graph.getNodesCount();
     const nodesByColor = new Array<Array<number>>(numColors + 1);
@@ -367,6 +362,7 @@ export class HEAStrategy extends ColoringStrategy {
 
     this.InitializeArrays(nodesByColor, nbcPos, conflicts, tabuStatus, graph, coloring, numColors);
 
+    let cost = 0;
     nodesInConflict[0] = 0;
     for (let i = 0; i < n; i++) {
       this.numChecks++;
@@ -393,18 +389,16 @@ export class HEAStrategy extends ColoringStrategy {
     let minSol = n;
     let maxSol = 0;
 
-    let currentIter = 0;
     let totalIter = 0;
 
-    // tabu loop
-    while (this.numChecks < this.config.maxChecks) {
-      currentIter++;
+    // TABU LOOP
+    while (totalIter < this.config.maxTabuIter) {
       totalIter++;
 
       const nc = nodesInConflict[0];
 
       let bestNode = -1;
-      let bestCol = 0;
+      let bestCol = -1;
       let bestCost = n * n;
       let numBest = 0;
 
@@ -424,7 +418,6 @@ export class HEAStrategy extends ColoringStrategy {
             }
             if (tabuStatus[node][c] < totalIter || newCost < bestCost) {
               // Select the nth move with probability 1/n
-              // TODO tweak
               if (Math.floor(Math.random() * (numBest + 1)) === 0) {
                 bestNode = node;
                 bestCol = c;
@@ -443,18 +436,19 @@ export class HEAStrategy extends ColoringStrategy {
         const col = coloring.get(nodes[bestNode].id);
 
         while (bestCol !== col) {
-          bestCol = Math.floor(Math.random() * numColors + 1);
+          bestCol = Math.floor(Math.random() * numColors) + 1;
           this.numChecks += 2;
           bestCost = cost + conflicts[bestCol][bestNode] - conflicts[col][bestNode];
         }
       }
 
-      this.MoveNodeToColor(bestNode, bestCol, graph, coloring, nodesByColor, conflicts, nbcPos,
-        nodesInConflict, confPos, tabuStatus, totalIter);
+      let tenure = this.config.tenure;
+      this.MoveNodeToColor(bestNode, bestCol, graph, coloring, conflicts,
+        nodesInConflict, confPos, tabuStatus, totalIter, tenure);
 
       cost = bestCost;
       // update the tabu tenure - we're using static tenure for now
-      this.config.tenure = Math.floor(0.6 * nc) + Math.floor(Math.random() * 10);
+      tenure = Math.floor(0.6 * nc) + Math.floor(Math.random() * 10);
 
       // check: have we a new globally best solution?
       if (cost < bestSolValue) {
@@ -467,14 +461,172 @@ export class HEAStrategy extends ColoringStrategy {
         // Otherwise reinitialize some values
         minSol = n * n;
         maxSol = 0;
-        currentIter = 0;
       }
     }
     return cost;
   }
 
   /**
-   * Initializes and runs the tabuCol algorithm to generate a solution
+   * Do a GPX crossover with 2 parents, update the population by replacing
+   *
+   * @param parents - parents array
+   * @param graph - graph
+   * @param numColors - number of color classes
+   * @param population - population array
+   *
+   * @returns ofs - the resulting offspring
+   */
+  private crossover(
+    parents: number[],
+    graph: any,
+    numColors: number,
+    population: Map<string, number>[]
+  ): Map<string, number> {
+
+    const n = graph.getNodesCount();
+    // init the offspring - we'll convert to a map later
+    // NOTE this only works for sequential node indexes
+    // colors start from 1 in this case
+    const osp = new Map<string, number>();
+
+    const numParents = parents.length;
+    // keep track of available parents (all are available initially)
+    const tabuList = new Array<number>(numParents).fill(-1);
+
+    // 2d array of color cardinality per parent
+    const parentCardinality = new Array<number>(numParents).fill(null).map(
+      () => new Array<number>(numColors + 1).fill(0)
+    );
+
+    // TODO choose parents randomly at first
+
+    // build a copy of the parents for bookkeeping later
+    const parentsCopies = new Array(numParents).fill(null);
+
+    // compute the cardinality
+    for (let i = 0; i < numParents; i++) {
+      parentsCopies[i] = new Map(population[parents[i]]);
+      for (let j = 0; j < n; j++) {
+        // get the color of node j from the i-th parent
+        const colorIndex = population[parents[i]].get(j.toString());
+        parentCardinality[i][colorIndex]++;
+      }
+    }
+
+    // actual crossover
+    let chosenParent = 0;
+    let chosenColor = 0;
+
+    // 'evolve' every color
+    for (let c = 1; c <= numColors; c++) {
+
+      // find the parent(s) with the biggest cardinality(ies)
+      let maxCard = -1;
+      const maxColors = new Array<number>();
+      const maxParents = new Array<number>();
+
+      for (let p = 0; p < numParents; p++) {
+        // skip unavailable parents
+        if (tabuList[p] >= c) {
+          continue;
+        }
+        for (let col = 1; col <= numColors; col++) {
+          const currentCard = parentCardinality[p][col];
+          if (currentCard > maxCard) {
+            maxCard = currentCard;
+
+            // repopulate the arrays with the max values
+            maxParents.length = 0;
+            maxParents.push(p);
+
+            maxColors.length = 0;
+            maxColors.push(col);
+          } else if (currentCard === maxCard) {
+            maxParents.push(p);
+            maxColors.push(col);
+          }
+        }
+      }
+      if (maxParents.length === 0) {
+        console.error('Could not choose suitable parent in crossover!');
+      } else {
+        // randomly choose a parent/color
+        const id = Math.floor(Math.random() * maxParents.length);
+        chosenParent = maxParents[id];
+        chosenColor = maxParents[id];
+      }
+      tabuList[chosenParent] = c + 1;
+      /** copy all of chosenParent's chosenColor-ed nodes to offspring AS color c and
+       * remove them from population
+       */
+
+      for (let i = 0; i < n; i++) {
+        if (parentsCopies[chosenParent].get(i.toString()) === chosenColor) {
+          // copy the 'good' color vertices to the offspring
+          osp.set(i.toString(), c);
+          // update the parent cardinalities (remove vertices from parents)
+          for (let pc = 0; pc < numParents; pc++) {
+            const color = parentsCopies[pc].get(i.toString());
+            if (color !== -1) {
+              parentCardinality[pc][color]--;
+            }
+            parentsCopies[pc].set(i.toString(), -1);
+          }
+        }
+      }
+    }
+
+    // crossover done - color remaining nodes randomly
+    for (let i = 0; i < n; i++) {
+      const iStr = i.toString();
+      const colorVal = osp.get(iStr);
+
+      if (colorVal === undefined) {
+        const randColor = Math.floor(Math.random() * numColors) + 1;
+        osp.set(iStr, randColor);
+      }
+
+      if (colorVal < 1) {
+        console.error('Invalid color found in osp. Something went wrong!');
+      }
+    }
+    return osp;
+  }
+
+  /**
+   * Replaces the weakest parent in the population with offspring
+   *
+   * @param population
+   * @param parents
+   * @param osp - offspring
+   * @param popCosts - population costs
+   * @param ospCost - offspring's cost
+   */
+  private replace(
+    population: Map<string, number>[],
+    parents: number[],
+    osp: Map<string, number>,
+    popCosts: number[],
+    ospCost: number
+  ) {
+
+    let maxCost = -1;
+    let worstParent = -1;
+    // find the weakest pop
+
+    for (const p of parents) {
+      const parentCost = popCosts[p];
+      if (parentCost > maxCost) {
+        maxCost = parentCost;
+        worstParent = p;
+      }
+    }
+    population[worstParent] = new Map(osp);
+    popCosts[worstParent] = ospCost;
+  }
+
+  /**
+   * Initializes and runs the HE algorithm to generate a solution
    * @param graph
    */
   public generateSolution(graph: any): ColoringSolution {
@@ -492,9 +644,10 @@ export class HEAStrategy extends ColoringStrategy {
     this.config.maxTabuIter = this.config.maxTabuIter * n;
 
     // a population is comprised of colorings
-    const population = new Array<Map<string, number>>(this.config.popSize).fill(
-      new Map<string, number>()
+    const population = new Array<Map<string, number>>(this.config.popSize).fill(null).map(
+      () => new Map<string, number>()
     );
+
     const popCosts = new Array<number>(this.config.popSize);
 
     // final population after local search
@@ -509,7 +662,6 @@ export class HEAStrategy extends ColoringStrategy {
     this.numChecks = initialSolution.numConfChecks;
     let bestColoring = initialSolution.coloring;
 
-    let coloring = bestColoring;
     // the number of unique colors used in the initial solution
     let numColors = this.getNumberOfColors();
 
@@ -519,7 +671,7 @@ export class HEAStrategy extends ColoringStrategy {
     let cost = 0;
     let foundSol = false;
 
-    // MAIN LOOP
+    // HEA LOOP
     while (this.numChecks < this.config.maxChecks && numColors + 1 > this.config.colorTarget) {
       foundSol = false;
 
@@ -562,15 +714,14 @@ export class HEAStrategy extends ColoringStrategy {
       // EVOLUTIONARY LOOP
       while (this.numChecks < this.config.maxChecks && !foundSol) {
 
-        // DO CROSSOVER TODO - write about type - TODO implement
-        //this.crossover(osp, parents, graph, numColors, population);
+        // DO CROSSOVER
+        osp = this.crossover(parents, graph, numColors, population);
 
         // improve offspring via tabu search
         cost = this.Tabu(graph, osp, numColors);
 
-        // replace weakest parent with offspring
-        // TODO implement
-        //this.replace(population, parents, osp, popCosts, graph, cost);
+        // REPLACE weakest parent with offspring
+        this.replace(population, parents, osp, popCosts, cost);
 
         if (cost < bestCost) {
           bestCost = cost;
@@ -584,9 +735,9 @@ export class HEAStrategy extends ColoringStrategy {
         bestColoring = osp;
         break;
       } else {
-        console.warn('No solution was found using ', this.getID(), ' reverting to constructive algo sol.');
+        console.warn('No solution was found using ', this.getID(),
+        ' reverting to constructive algo sol.');
       }
-
       numColors--;
     }
     return new ColoringSolution(bestColoring, numColors + 1, this.numChecks);
