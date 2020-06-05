@@ -59,14 +59,70 @@ export class HEAStrategy extends ColoringStrategy {
   }
 
   /**
-   * Builds the initial solution using modified Greedy algo on a random
+   * Assigns a node to a color during the initial solution created by modified DSatur
+   * and updates the color info arrays
+   *
+   * @param nColsAvailable - number of colors available per node
+   * @param colByNode - matrix containing info about availalble colors per node
+   * @param coloring - partial solution computed so far
+   * @param nc - number of color classes
+   * @param node - node's id (can be replaced by index by parsing the string as int)
+   *
+   */
+  private assignToCol4Init(
+    nColsAvailable: Array<number>,
+    colByNode: Array<Array<boolean>>,
+    coloring: Map<string, number>,
+    nc: number,
+    node: string,
+    graph: any,
+  ) {
+
+    const nodeId = parseInt(node, 10);
+    let c = 0;
+    let foundColor = false;
+
+    while (c < nc) {
+      // color is available for our node
+      if (colByNode[nodeId][c]) {
+        // add it to the solution
+        coloring.set(node, c);
+        foundColor = true;
+        break;
+      }
+      c++;
+    }
+
+    // this should not happen
+    if (!foundColor) {
+      console.error('Could not assign color class during initial solution.');
+    }
+
+    // update the available-color info arrays
+    nColsAvailable[nodeId] = -1; // mark the node as having been assigned
+    // go through all nodes, see who's not assigned a color and reduce its color options
+    for (let i = 0; i < graph.getNodesCount(); i++) {
+
+      if (nColsAvailable[i] !== -1) {
+        this.numChecks++;
+
+        if (colByNode[i][c] && graph.hasEdgeBetween(i.toString(), node)) {
+          colByNode[i][c] = false;
+          nColsAvailable[i]--;
+        }
+      }
+    }
+  }
+
+  /**
+   * Builds the initial solution using modified DSatur algo on a random
    * permutation of the vertices, allowing only numColors color classes.
    *
    * @param graph - the graph we operate on
    * @param coloring - the current coloring solution
    * @param numColors - the number of color classes allowed
    */
-  private InitializeColoringForTabu(
+  private InitializeColoringForHEA(
     graph: any,
     coloring: Map<string, number>,
     numColors: number
@@ -77,44 +133,92 @@ export class HEAStrategy extends ColoringStrategy {
       return;
     }
 
-    // init and shuffle array of node indices
+    const n = graph.getNodesCount();
+    // keep track of available colors for each node
+    // every node has numColors available initially
+    const numColsAvailable = new Array<number>(n).fill(numColors);
+    // keep a list of available color classes per node
+    // all colors are available for every node initially
+    const colorsByNode = new Array(n).fill(true).map(() => new Array<boolean>(numColors).fill(true));
+
+    // choose a random node and assign it to the first color
+    let node = Math.floor(Math.random() * n).toString();
+
+    this.assignToCol4Init(numColsAvailable, colorsByNode, coloring, numColors, node, graph);
+    // while we can still assign colors
+    while (numColsAvailable.some(x => x >= 1)) {
+
+      // find the minimum accepted value
+      let minValue = Number.MAX_SAFE_INTEGER;
+      for (const nca of numColsAvailable) {
+        if (nca >= 1 && nca < minValue) {
+          minValue = nca;
+        }
+      }
+
+      // get all the nodes (array indexes) with this value and randomly choose one to assign to a color
+      const candNodes = new Array<number>();
+      for (let i = 0; i < numColsAvailable.length; i++) {
+        if (numColsAvailable[i] === minValue) {
+          candNodes.push(i);
+        }
+      }
+
+      const randId = Math.floor(Math.random() * candNodes.length);
+      // assign a color to the newly chosen node
+      node = candNodes[randId].toString();
+      this.assignToCol4Init(numColsAvailable, colorsByNode, coloring, numColors, node, graph);
+    }
+
+    // now randomly assigned the nodes with 0 options to some color (if needed)
+    for (let i = 0; i < n; i++) {
+      if (numColsAvailable[i] > 0) {
+        console.error('Node with options was not assigned. Something went wrong!');
+      }
+
+      if (numColsAvailable[i] === 0) {
+        const randColor = Math.floor(Math.random() * numColors);
+        coloring.set(i.toString(), randColor);
+      }
+    }
+    // finally shift the color indexes to the interval [1, numColors]
+    coloring.forEach((v, k) => coloring.set(k, v + 1));
+  }
+
+  /**
+   * Checks if a coloring solution is optimal. i.e. all adjacent nodes have different
+   * colors within [1, nc]
+   * @param sol
+   * @param nc
+   * @param graph
+   */
+  private isSolutionOptimal(
+    sol: Map<string, number>,
+    nc: number,
+    graph: any,
+  ): boolean {
+
+    const n = graph.getNodesCount();
     const nodeIds = graph.nodes().map(node => node.id);
-    const nodeIdsShuffled = graph.nodes().map(node => node.id);
-    this.shuffleArray(nodeIdsShuffled);
-    this.colorGenerator.resize(numColors + 1);
 
-    let usedColors = new Array<boolean>(numColors + 1).fill(false);
+    for (let i = 0; i < n - 1; i++) {
+      for (let j = i + 1; j < n; j ++) {
+        const node1 = nodeIds[i];
+        const node2 = nodeIds[j];
 
-    // sanitize values outside of max color range
-    for (const pair of coloring.entries()) {
-      const color = pair[1];
-      if (color < 1 || color > numColors) {
-        coloring.set(pair[0], 1);
-      }
-    }
+        const col1 = sol.get(node1);
+        const col2 = sol.get(node2);
 
-    for (const nodeId of nodeIdsShuffled) {
-      usedColors = usedColors.map(el => false);
-      const color = coloring.get(nodeId);
-      for (const otherNodeId of nodeIds) {
-        this.numChecks++;
-        if (graph.hasEdgeBetween(nodeId, otherNodeId)) {
-          usedColors[color] = true;
-          break;
+        if (Math.max(col1, col2) > nc || Math.min(col1, col2) < 1) {
+          console.error('Node colors out of bounds!');
+        }
+
+        if (col1 === col2 && graph.hasEdgeBetween(node1, node2)) {
+          return false;
         }
       }
-      // node is part of a clash so we randomly assign a different color to it
-      if (usedColors[color]) {
-        let newCol = Math.floor(Math.random() * numColors) + 1;
-        for (let col = 1; col <= numColors; col++) {
-          if (!usedColors[col]) {
-            newCol = col;
-            break;
-          }
-        }
-        coloring.set(nodeId, newCol);
-      }
     }
+    return true;
   }
 
   // TODO
@@ -246,10 +350,10 @@ export class HEAStrategy extends ColoringStrategy {
   private Tabu(
     graph: any,
     coloring: Map<string, number>,
-    numColors: number
+    numColors: number,
   ): number {
 
-    this.InitializeColoringForTabu(graph, coloring, numColors);
+    this.InitializeColoringForHEA(graph, coloring, numColors);
     let cost = 0;
 
     const n = graph.getNodesCount();
@@ -405,7 +509,7 @@ export class HEAStrategy extends ColoringStrategy {
     this.numChecks = initialSolution.numConfChecks;
     let bestColoring = initialSolution.coloring;
 
-    const coloring = bestColoring;
+    let coloring = bestColoring;
     // the number of unique colors used in the initial solution
     let numColors = this.getNumberOfColors();
 
@@ -421,12 +525,10 @@ export class HEAStrategy extends ColoringStrategy {
 
       // build the initial population
       for (let i = 0; i < this.config.popSize; i++) {
-        // TODO implement
         this.InitializeColoringForHEA(graph, population[i], numColors);
 
-        // TODO implement
         // check for optimal solution
-        if (this.isSolOptimal(population[i], graph, numColors)) {
+        if (this.isSolutionOptimal(population[i], numColors, graph)) {
           foundSol = true;
           osp = population[i];
           break;
@@ -454,21 +556,21 @@ export class HEAStrategy extends ColoringStrategy {
       }
 
       // Evolve the population
-      let cost = 1;
+      cost = 1;
       let bestCost = Number.MAX_SAFE_INTEGER;
 
       // EVOLUTIONARY LOOP
       while (this.numChecks < this.config.maxChecks && !foundSol) {
 
         // DO CROSSOVER TODO - write about type - TODO implement
-        this.crossover(osp, parents, graph, numColors, population);
+        //this.crossover(osp, parents, graph, numColors, population);
 
         // improve offspring via tabu search
         cost = this.Tabu(graph, osp, numColors);
 
         // replace weakest parent with offspring
         // TODO implement
-        this.replace(population, parents, osp, popCosts, graph, cost);
+        //this.replace(population, parents, osp, popCosts, graph, cost);
 
         if (cost < bestCost) {
           bestCost = cost;
