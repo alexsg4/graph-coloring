@@ -671,7 +671,7 @@ export class HEAStrategy extends ColoringStrategy {
     let cost = 0;
     let foundSol = false;
 
-    // HEA LOOP
+    // MAIN LOOP
     while (this.numChecks < this.config.maxChecks && numColors + 1 > this.config.colorTarget) {
       foundSol = false;
 
