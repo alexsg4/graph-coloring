@@ -4,8 +4,14 @@
       <mat-toolbar id="main-navbar" color="primary">
         <span>{{ title }}</span>
         <span class="spacer"></span>
-        <span> Color </span>
-        <span> Create </span>
+        <button mat-flat-button (click) = toggleGraphSelectDialog()
+          color="accent"
+          matTooltip="Choose an existing graph"> Choose graph
+        </button>
+        <button mat-flat-button (click) = toggleGraphUploadDialog()
+          color="accent"
+          matTooltip="Upload a .gexf graph from disk - TODO"> Upload graph
+      </button>
       </mat-toolbar>
     </mat-grid-tile>
 
@@ -22,7 +28,7 @@
     </mat-grid-tile>
 
     <mat-grid-tile id="footer" colspan="12" rowspan="1">
-      <span>&copy; Alexandru Stanciu - 2019</span>
+      <span>&copy; Alexandru Stanciu - 2020</span>
     </mat-grid-tile>
   </mat-grid-list>
 </main>

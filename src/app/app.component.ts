@@ -12,4 +12,11 @@ export class AppComponent implements OnInit {
     console.log('AppComponent: OnInit!');
   }
 
+  toggleGraphSelectDialog(): void {
+    console.warn('toggled graph dialog');
+  }
+
+  toggleGraphUploadDialog(): void {
+    console.warn('toggled graph dialog');
+  }
 }

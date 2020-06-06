@@ -11,6 +11,9 @@ import { GraphModule } from './graph/graph.module';
 // Material
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatGridListModule } from '@angular/material/grid-list';
+import { MatButtonModule } from '@angular/material/button';
+import { MatTooltipModule } from '@angular/material/tooltip';
+
 
 @NgModule({
   declarations: [
@@ -26,7 +29,9 @@ import { MatGridListModule } from '@angular/material/grid-list';
 
     // Material
     MatToolbarModule,
-    MatGridListModule
+    MatGridListModule,
+    MatButtonModule,
+    MatTooltipModule
   ],
   providers: [],
   bootstrap: [AppComponent]
