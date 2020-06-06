@@ -1,7 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { StrategySelectService } from '../coloring-controls/strategy-select.service';
 import { ColoringService } from '../coloring.service';
-import { isNullOrUndefined } from 'util';
 import { ColorGeneratorService } from '../color-generator.service';
 
 declare const sigma: any;
@@ -32,7 +31,7 @@ export class GraphViewComponent implements OnInit {
         edgeColor: 'default'
       }
     });
-    const testGraphFilePath = 'assets/graphs/testGraph.gexf';
+    const testGraphFilePath = 'assets/graphs/testGraph-2.gexf';
     this.loadGraphFromFile(testGraphFilePath);
 
     this.strategySelect.currentMessage.subscribe(
@@ -83,12 +82,13 @@ export class GraphViewComponent implements OnInit {
         console.error('Color node: Error node does not exist!');
         return;
       }
-      if (isNullOrUndefined(color)) {
+      if (!color) {
         console.error('Color node: invalid color!');
         return;
       }
       const node = this.nodesIndex[nodeID];
-      node.label = node.label.match('[0-9]').toString() + ' ' + color;
+      const newLabel = node.id + ' ' + color;
+      node.label = newLabel;
       node.color = color.trim();
     });
 
@@ -115,13 +115,17 @@ export class GraphViewComponent implements OnInit {
   }
 
   private rebuildGraphIfNecessary(graph: any) {
-    if (isNullOrUndefined(graph)) {
+    if (!graph) {
       console.error('graph could not be loaded');
     }
 
     const nodesCount = graph.nodes().length;
     let needRebuild = false;
     for (const node of graph.nodes()) {
+      // NOTE this is sneaky but we also LABEL all nodes here and color them black
+      node.label = node.id;
+      node.color = '#000000';
+
       const id = parseInt(node.id, 10);
       needRebuild = isNaN(id) || id >= nodesCount;
       if (needRebuild) {
@@ -149,9 +153,9 @@ export class GraphViewComponent implements OnInit {
       const newId = newIds.get(oldNode.id);
       graph.addNode(
         {
-          color: oldNode.color,
+          color: '#000000',
           id: newId.toString(),
-          label: (newId + 1).toString(),
+          label: newId.toString(),
           size: oldNode.size,
           viz: oldNode.viz,
           x: oldNode.x,
@@ -218,7 +222,7 @@ export class GraphViewComponent implements OnInit {
     }
     const solution = this.coloringService.applyColoringStrategy(graph, strategy);
 
-    if (isNullOrUndefined(solution) || isNullOrUndefined(solution.coloring)) {
+    if (!solution || !solution.coloring) {
       console.warn('Solution or coloring does not exist!');
       return;
     }
@@ -227,7 +231,7 @@ export class GraphViewComponent implements OnInit {
       const nodeId = node.id;
       const nodeColor = this.colorGenerator.getColorByIndex(solution.coloring.get(nodeId));
 
-      if (isNullOrUndefined(node)) {
+      if (!node) {
         console.error('ColorGraph: invalid color');
       }
       graph.colorNode(nodeId, nodeColor);
