@@ -4,11 +4,14 @@ import { CommonModule } from '@angular/common';
 import { GraphViewComponent } from './graph-view/graph-view.component';
 import { ColoringControlsComponent } from './coloring-controls/coloring-controls.component';
 import { ColoringService } from './coloring.service';
+
 import { StrategySelectService } from './coloring-controls/strategy-select.service';
+
 import { ColoringStrategy } from './coloring-strategy/coloring-strategy';
 import { SimpleGreedyStrategy } from './coloring-strategy/greedy-strategy';
 import { DSaturStrategy } from './coloring-strategy/dsatur-strategy';
 import { TabuColStrategy } from './coloring-strategy/tabu-col-strategy';
+import { HEAStrategy } from './coloring-strategy/hea-strategy';
 
 import { MatButtonModule } from '@angular/material/button';
 import { MatSelectModule } from '@angular/material/select';
@@ -25,7 +28,8 @@ const COLORING_PROVIDER: FactoryProvider = {
   deps: [
     SimpleGreedyStrategy,
     DSaturStrategy,
-    TabuColStrategy
+    TabuColStrategy,
+    HEAStrategy
   ]
 };
 
@@ -50,7 +54,8 @@ const COLORING_PROVIDER: FactoryProvider = {
     COLORING_PROVIDER,
     SimpleGreedyStrategy,
     DSaturStrategy,
-    TabuColStrategy
+    TabuColStrategy,
+    HEAStrategy
   ]
 })
 export class GraphModule { }
