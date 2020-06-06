@@ -1,31 +1,10 @@
 import { ColoringStrategy } from './coloring-strategy';
 import { ColoringSolution } from './coloring-solution';
 import { Injectable } from '@angular/core';
+import * as ConstructiveHelpers from './helpers/constructive-algo';
 
 @Injectable()
 export class DSaturStrategy extends ColoringStrategy {
-
-  /**
-   * Checks if a color can be assigned to a node given the current (partial) coloring
-   * i.e. there are no neighbours of node having color c
-   */
-  private isColorFeasible(
-    color: number,
-    node: string,
-    graphColoring: Map<string, number>,
-    graph
-  ): boolean {
-
-    this.numChecks++;
-
-    for (const coloredNode of graphColoring.keys()) {
-      this.numChecks++;
-      if (graphColoring.get(coloredNode) === color && graph.hasEdgeBetween(node, coloredNode)) {
-        return false;
-      }
-    }
-    return true;
-  }
 
   /**
    * Try to assign a color to a node and return the status of the operation's success
@@ -51,7 +30,9 @@ export class DSaturStrategy extends ColoringStrategy {
     const node = nodeIds[nodeIndex];
 
     for (let color = 0; color < this.getNumberOfColors(); color++) {
-      if (this.isColorFeasible(color, node, nodeColoring, graph)) {
+      const [feasible, nchecks] = ConstructiveHelpers.isColorFeasible(color, node, nodeColoring, graph);
+      this.numChecks += nchecks;
+      if (feasible) {
         foundColor = true;
         nodeColoring.set(node, color);
 
