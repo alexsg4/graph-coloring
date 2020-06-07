@@ -5,8 +5,10 @@ import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
-// Custom
-import { GraphModule } from './graph/graph.module';
+// Firebase
+import { AngularFireModule } from '@angular/fire';
+import { AngularFirestoreModule } from '@angular/fire/firestore';
+import { AngularFireStorageModule } from '@angular/fire/storage';
 
 // Material
 import { MatToolbarModule } from '@angular/material/toolbar';
@@ -14,6 +16,10 @@ import { MatGridListModule } from '@angular/material/grid-list';
 import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
+// App
+import { GraphModule } from './graph/graph.module';
+
+import { environment } from '../environments/environment';
 
 @NgModule({
   declarations: [
@@ -24,14 +30,19 @@ import { MatTooltipModule } from '@angular/material/tooltip';
     AppRoutingModule,
     BrowserAnimationsModule,
 
-    // Custom
-    GraphModule,
+    // Firebase
+    AngularFireModule.initializeApp(environment.firebaseConfig),
+    AngularFirestoreModule,
+    AngularFireStorageModule,
 
     // Material
     MatToolbarModule,
     MatGridListModule,
     MatButtonModule,
-    MatTooltipModule
+    MatTooltipModule,
+
+    // App
+    GraphModule,
   ],
   providers: [],
   bootstrap: [AppComponent]
