@@ -26,7 +26,7 @@
             "assets": [
               "src/favicon.ico",
               "src/assets",
-              {"glob": "**/*", "input":"./node_modules/sigma/build", "output": "/assets/lib" }
+              {"glob": "**/*", "input":"./node_modules/sigma/build", "output": "/assets/lib/sigma" }
             ],
             "styles": [
               "src/styles.scss"
@@ -35,6 +35,7 @@
               "src/assets/lib/sigma/sigma.conf.js",
               "node_modules/sigma/build/sigma.min.js",
               "node_modules/sigma/build/plugins/sigma.parsers.gexf.min.js"
+              
             ]
           },
           "configurations": {

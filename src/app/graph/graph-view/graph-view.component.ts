@@ -2,6 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { StrategySelectService } from '../coloring-controls/strategy-select.service';
 import { ColoringService } from '../coloring.service';
 import { ColorGeneratorService } from '../color-generator.service';
+import { GraphSelectService } from '../../services/graph-select.service';
+import { FilesService } from '../../services/files.service';
 
 declare const sigma: any;
 
@@ -15,15 +17,20 @@ export class GraphViewComponent implements OnInit {
   private sigmaInstance: any;
   private isColored: boolean;
   private graphContainerId = 'graph-container';
+  private fallbackGraphPath = 'assets/graphs/testGraph-2.gexf';
 
   constructor(private strategySelect: StrategySelectService,
               private coloringService: ColoringService,
-              private colorGenerator: ColorGeneratorService) {
+              private colorGenerator: ColorGeneratorService,
+              private graphSelect: GraphSelectService,
+              private fserv: FilesService) {
     this.isColored = false;
     this.addGraphMethods();
    }
 
   ngOnInit() {
+
+    // Init sigma
     this.sigmaInstance = new sigma({
       container: document.getElementById(this.graphContainerId),
       settings: {
@@ -31,16 +38,27 @@ export class GraphViewComponent implements OnInit {
         edgeColor: 'default'
       }
     });
-    const testGraphFilePath = 'assets/graphs/testGraph-2.gexf';
-    this.loadGraphFromFile(testGraphFilePath);
 
+    // Listen for graph choice
+    this.graphSelect.chosenGraphUrl$.subscribe(async url => {
+      if (!url || !url.length) {
+        return;
+      }
+
+      this.loadGraphFromFile(url);
+    });
+
+    // Listen for coloring strategy
     this.strategySelect.currentMessage.subscribe(
       message => {
          console.log('Received message ' + message + ' of type:', typeof(message));
          this.colorGraph(message);
       },
-      error => console.warn(error)
+      error => console.error(error)
     );
+
+    // Load the default graph
+    this.loadGraphFromFile(this.fallbackGraphPath);
   }
 
   private addGraphMethods() {
@@ -93,7 +111,7 @@ export class GraphViewComponent implements OnInit {
     });
 
     sigma.classes.graph.addMethod('getNodesCount', function() {
-      return this.nodesArray.length;;
+      return this.nodesArray.length;
     });
 
     sigma.classes.graph.addMethod('getAdjList', function(nodeID: string): Array<string> {
@@ -180,9 +198,13 @@ export class GraphViewComponent implements OnInit {
     }
   }
 
-  private loadGraphFromFile(filePath: string) {
+  private loadGraphFromFile(file: string|Blob) {
+    if (!file || file === '') {
+      console.warn('Invalid file.');
+      return;
+    }
     sigma.parsers.gexf(
-      filePath,
+      file,
       this.sigmaInstance,
       () => {
         this.rebuildGraphIfNecessary(this.sigmaInstance.graph);

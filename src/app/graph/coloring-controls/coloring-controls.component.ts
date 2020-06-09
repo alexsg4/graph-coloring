@@ -9,8 +9,7 @@ import { StrategySelectService } from './strategy-select.service';
 export class ColoringControlsComponent implements OnInit {
   selected: string;
 
-  constructor(private strategySelect: StrategySelectService) {
-  }
+  constructor(private strategySelect: StrategySelectService) { }
 
   ngOnInit() {
     this.selected = 'none';

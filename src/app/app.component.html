@@ -4,14 +4,8 @@
       <mat-toolbar id="main-navbar" color="primary">
         <span>{{ title }}</span>
         <span class="spacer"></span>
-        <button mat-flat-button (click) = toggleGraphSelectDialog()
-          color="accent"
-          matTooltip="Choose an existing graph"> Choose graph
-        </button>
-        <button mat-flat-button (click) = toggleGraphUploadDialog()
-          color="accent"
-          matTooltip="Upload a .gexf graph from disk - TODO"> Upload graph
-      </button>
+
+        <app-graph-selector-open></app-graph-selector-open>
       </mat-toolbar>
     </mat-grid-tile>
 

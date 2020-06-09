@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { AuthService } from './services/auth.service';
 
 @Component({
   selector: 'app-root',
@@ -8,15 +9,11 @@ import { Component, OnInit } from '@angular/core';
 export class AppComponent implements OnInit {
   title = 'Graph Coloring';
 
+  constructor(private auth: AuthService) { }
+
   ngOnInit(): void {
     console.log('AppComponent: OnInit!');
-  }
 
-  toggleGraphSelectDialog(): void {
-    console.warn('toggled graph dialog');
-  }
-
-  toggleGraphUploadDialog(): void {
-    console.warn('toggled graph dialog');
+    this.auth.anonLogin();
   }
 }

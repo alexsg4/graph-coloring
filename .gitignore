@@ -8,9 +8,6 @@
 # Only exists if Bazel was run
 /bazel-out
 
-# debug logs
-firebase-debug.log
-
 # dependencies
 /node_modules
 
@@ -48,3 +45,8 @@ testem.log
 # System Files
 .DS_Store
 Thumbs.db
+
+# Firebase
+.firebase/hosting*
+firebase-debug.log
+src/app/firebase-config.ts
