@@ -30,6 +30,7 @@ import {
   GraphSelectorDialogOpenerComponent } from './graph-selector/graph-selector.component';
 import { UploaderComponent } from './uploader/uploader.component';
 import { UploadSnackbarComponent } from './uploader/upload-snackbar/upload-snackbar.component';
+import { ConsoleComponent } from './console/console.component';
 
 
 @NgModule({
@@ -38,7 +39,8 @@ import { UploadSnackbarComponent } from './uploader/upload-snackbar/upload-snack
     GraphSelectorComponent,
     GraphSelectorDialogOpenerComponent,
     UploaderComponent,
-    UploadSnackbarComponent
+    UploadSnackbarComponent,
+    ConsoleComponent
   ],
   imports: [
     BrowserModule,

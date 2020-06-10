@@ -28,12 +28,6 @@ main {
       color: $col-text;
     }
 
-    /* TODO move styling to component */
-    mat-grid-tile#console{
-      background: rgb(47, 47, 77);
-      color: white;
-    }
-
     #footer{
       display: flex;
       flex-direction: row;

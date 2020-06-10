@@ -4,6 +4,7 @@ import { ColoringService } from '../coloring.service';
 import { ColorGeneratorService } from '../color-generator.service';
 import { GraphSelectService } from '../../services/graph-select.service';
 import { FilesService } from '../../services/files.service';
+import { ConsoleWriterService } from '../../console/console-writer.service';
 
 declare const sigma: any;
 
@@ -19,12 +20,23 @@ export class GraphViewComponent implements OnInit {
   private graphContainerId = 'graph-container';
   private fallbackGraphPath = 'assets/graphs/testGraph-2.gexf';
 
+  private prevColoring;
+
   constructor(private strategySelect: StrategySelectService,
               private coloringService: ColoringService,
               private colorGenerator: ColorGeneratorService,
               private graphSelect: GraphSelectService,
-              private fserv: FilesService) {
+              private fserv: FilesService,
+              private writer: ConsoleWriterService) {
+
+
     this.isColored = false;
+    this.prevColoring = {
+      nodes: new Set<string>(),
+      color: '',
+      origin: ''
+    };
+
     this.addGraphMethods();
    }
 
@@ -34,10 +46,12 @@ export class GraphViewComponent implements OnInit {
     this.sigmaInstance = new sigma({
       container: document.getElementById(this.graphContainerId),
       settings: {
-        nodeColor: 'default',
-        edgeColor: 'default'
+        nodeColor: '#000000',
+        edgeColor: '#000000'
       }
     });
+
+    this.bindSigmaEvents();
 
     // Listen for graph choice
     this.graphSelect.chosenGraphUrl$.subscribe(async url => {
@@ -60,6 +74,7 @@ export class GraphViewComponent implements OnInit {
     // Load the default graph
     this.loadGraphFromFile(this.fallbackGraphPath);
   }
+
 
   private addGraphMethods() {
     sigma.classes.graph.addMethod('hasEdgeBetween', function(nodeID1: string, nodeID2: string): boolean {
@@ -95,7 +110,7 @@ export class GraphViewComponent implements OnInit {
       node.color = colorStr.trim();
     });
 
-    sigma.classes.graph.addMethod('colorNode', function(nodeID: string, color: string): void {
+    sigma.classes.graph.addMethod('colorNode', function(nodeID: string, color: string, relabel = false): void {
       if (!this.nodesIndex[nodeID]) {
         console.error('Color node: Error node does not exist!');
         return;
@@ -105,8 +120,10 @@ export class GraphViewComponent implements OnInit {
         return;
       }
       const node = this.nodesIndex[nodeID];
-      const newLabel = node.id + ' ' + color;
-      node.label = newLabel;
+      if (relabel) {
+        const newLabel = node.id + ' ' + color;
+        node.label = newLabel;
+      }
       node.color = color.trim();
     });
 
@@ -129,6 +146,59 @@ export class GraphViewComponent implements OnInit {
         }
       }
       return neighbours;
+    });
+  }
+
+  // TESTING
+  private bindSigmaEvents() {
+
+    this.sigmaInstance.bind('overNode', e => {
+
+      console.warn('Color adj list');
+      console.log(e.type, e.data.node.label, e.data.captor);
+
+      const node = e.data.node;
+      if (node.id === this.prevColoring.origin) {
+        return;
+      }
+
+      const graph = this.sigmaInstance.graph;
+
+      const HLCOLOR = '#FFFEFE';
+
+      this.prevColoring.color = node.color;
+      for (const other of graph.nodes()) {
+        if (other.color === node.color) {
+          this.prevColoring.nodes.add(other.id);
+        }
+      }
+      if (this.prevColoring.nodes.size) {
+        this.prevColoring.origin = node.id;
+        for (const nodeID of this.prevColoring.nodes) {
+          graph.colorNode(nodeID, HLCOLOR);
+        }
+        this.sigmaInstance.refresh();
+      }
+    });
+
+    this.sigmaInstance.bind('outNode', e => {
+      console.warn('RESET COLOR adj list');
+      console.log(e.type, e.data.node.label, e.data.captor);
+
+      if (e.data.node.id !== this.prevColoring.origin) {
+        return;
+      }
+      const graph = this.sigmaInstance.graph;
+
+      for (const node of this.prevColoring.nodes) {
+        graph.colorNode(node, this.prevColoring.color);
+      }
+      // reset the prev coloring info
+      this.prevColoring.origin = '';
+      this.prevColoring.color = '';
+      this.prevColoring.nodes.clear();
+
+      this.sigmaInstance.refresh();
     });
   }
 
@@ -231,16 +301,20 @@ export class GraphViewComponent implements OnInit {
 
     const reset = (strategy.toLowerCase() === 'reset');
     if (reset) {
+      let msg = '';
       if (!this.isColored) {
-        console.warn('Graph is not colored. Will not reset.');
-        return;
+        msg = 'Graph is not colored. Will not reset.';
       } else {
         graph.resetColoring();
         this.isColored = false;
         this.sigmaInstance.refresh();
-        console.warn('Graph coloring was reset.');
-        return;
+        msg = 'Graph coloring was reset.';
+
+        // write a special message for console output reset
+        this.writer.writeMessage('#reset');
       }
+      this.writer.writeMessage(msg, 'warn');
+      return;
     }
     const solution = this.coloringService.applyColoringStrategy(graph, strategy);
 
@@ -256,14 +330,19 @@ export class GraphViewComponent implements OnInit {
       if (!node) {
         console.error('ColorGraph: invalid color');
       }
-      graph.colorNode(nodeId, nodeColor);
+      graph.colorNode(nodeId, nodeColor, true);
     }
 
-    console.log('Graph was colored with \'' + strategy +
-       '\' conflict checks: ' + solution.numConfChecks.toString() +
-       ' colors: ' + solution.numColors);
+    // compose the coloring status message
+    let message = 'Graph was colored with \'' + strategy +
+    '\' conflict checks: ' + solution.numConfChecks.toString() +
+    ' colors: ' + solution.numColors;
     const validString = solution.isValid(graph) ? 'valid' : 'invalid';
-    console.log('Coloring is ' + validString + '!');
+    message += '\nColoring is ' + validString + '!';
+
+    // write it to the app console
+    this.writer.writeMessage(message, 'log');
+
     this.isColored = true;
     this.sigmaInstance.refresh();
   }

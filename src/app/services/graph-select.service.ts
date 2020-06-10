@@ -11,7 +11,7 @@ export class GraphSelectService {
   constructor() { }
 
   changeUrl(url: string) {
-    if (!url || !url.match('^(https|gs):\/\/.+(\.gexf)?$')) {
+    if (!url || !url.match('^https:\/\/.+(\.gexf)?$')) {
       console.warn('invalid graph url ', url);
       return;
     }
