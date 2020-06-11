@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
 
 import { AngularFireStorage, AngularFireUploadTask } from '@angular/fire/storage';
 import { AngularFirestore } from '@angular/fire/firestore';
@@ -8,6 +8,7 @@ import { AuthService } from '../services/auth.service';
 
 import { UploadSnackbarComponent } from './upload-snackbar/upload-snackbar.component';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { GraphSelection } from '../services/graph-select.service';
 
 
 @Component({
@@ -24,6 +25,8 @@ export class UploaderComponent implements OnInit {
   snapshot: Observable<any>;
   downloadURL: Observable<string>;
 
+  @ViewChild('fileInput') fileInput: ElementRef;
+
   constructor(
     private storage: AngularFireStorage,
     private db: AngularFirestore,
@@ -35,9 +38,10 @@ export class UploaderComponent implements OnInit {
     console.log('Uploader: init!');
   }
 
-  async updateDatabase(fileUrl: string) {
+  async updateDatabase(graphInfo: GraphSelection) {
     console.warn('DB Update function:');
-    console.log('URL: ', fileUrl);
+    console.log('URL: ', graphInfo.url);
+    console.log('FileType: ', graphInfo.ftype);
 
     const userID = this.auth.currentUserId;
     // Check if previous user graph exists databse
@@ -55,7 +59,7 @@ export class UploaderComponent implements OnInit {
     // document exists so we update fpath
     if (docRef) {
       console.log('Graph entry exists. Will update file path.');
-      docRef.update({ fileLoc: fileUrl }).then(() => {
+      docRef.update({ fileLoc: graphInfo.url, fileType: graphInfo.ftype }).then(() => {
         console.log('Entry updated successfully.');
       }).catch(err => {
         console.log(err.message);
@@ -65,7 +69,8 @@ export class UploaderComponent implements OnInit {
       this.db.collection('graphs').add({
         desc: 'Uploaded graph',
         displayName: 'User graph',
-        fileLoc: fileUrl,
+        fileLoc: graphInfo.url,
+        fileType: graphInfo.ftype,
         uid: userID
       }).catch(err => {
         console.log(err.message);
@@ -75,17 +80,18 @@ export class UploaderComponent implements OnInit {
     }
   }
 
-  async tryUpload(file: File) {
+  async tryUpload(file: File, fileType: string) {
     // check file is valid
-    if (!file) {
+    if (!file || !fileType || !fileType.match('^.+(gexf|xml|json)$')) {
       console.warn('Invalid file for upload!');
       return;
     }
 
     const userID = this.auth.currentUserId;
+    const extension = fileType.split('/').pop();
 
     // The storage path
-    const path = `graphs/u/${userID}/user-graph`;
+    const path = `graphs/u/${userID}/user-graph.${extension}`;
 
     // Reference to storage bucket
     const storageRef = this.storage.ref(path);
@@ -113,7 +119,7 @@ export class UploaderComponent implements OnInit {
       finalize(() => {
         this.downloadURL = storageRef.getDownloadURL();
         this.downloadURL.subscribe(val => {
-          this.updateDatabase(val);
+          this.updateDatabase({url: val, ftype: extension});
         });
       }),
     ).subscribe(
@@ -124,21 +130,22 @@ export class UploaderComponent implements OnInit {
   }
 
   onFileSelected() {
-    // get the selected file
-    const inputNode: any = document.querySelector('#file');
-
     const reader = new FileReader();
+    let fileType = null;
+
     reader.onload = (e: any) => {
-      const file = e.target.result;
+      const inputFile = e.target.result;
       // console.log(file);
 
       // check it's ok and upload it
-      this.tryUpload(file);
+      this.tryUpload(inputFile, fileType);
     };
     reader.onerror = (e: any) => {
       console.error(e);
     };
-    reader.readAsArrayBuffer(inputNode.files[0]);
+    const file = this.fileInput.nativeElement.files[0];
+    fileType = file.type || null;
+    reader.readAsArrayBuffer(file);
   }
 
   isActive(snapshot) {

@@ -1,6 +1,10 @@
 <div id="graph-container">
-  <button mat-fab *ngIf="[isColored]">
-    Download
+  <button id="dl-button"
+    mat-fab color="primary"
+    matTooltip="Download colored graph as JSON"
+    matTooltipPosition="left"
+    *ngIf="isColored"
+    (click) = "getJSONGraph(true)">
+      <mat-icon>save</mat-icon>
   </button>
-  
 </div>

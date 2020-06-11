@@ -4,7 +4,6 @@ import { MatDialog } from '@angular/material/dialog';
 import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { FilesService } from '../services/files.service';
 import { GraphSelectService } from '../services/graph-select.service';
 
 // loosely based on https://fireship.io/lessons/angular-firebase-storage-uploads-multi/
@@ -16,29 +15,28 @@ import { GraphSelectService } from '../services/graph-select.service';
 })
 export class GraphSelectorComponent implements OnInit {
 
-  files: File[];
-  files$: Observable<any[]>;
+  docs$: Observable<any[]>;
   graphsForm: FormGroup;
 
   constructor(
     private fb: FormBuilder,
-    public fserv: FilesService,
     private gserv: GraphSelectService) {
 
     this.graphsForm = this.fb.group({
-      chosenGraphFile: ['', Validators.required]
+      chosenGraphDoc: [null, Validators.required]
     });
 
-    this.files$ = this.fserv.fileList;
+    this.docs$ = this.gserv.availableGraphs;
 
     // DEBUG LOGS
     if (!environment.production) {
-      this.files$.subscribe(docs => {
-        for (const doc of docs) {
-          console.log('name: ' + doc.displayName);
-          console.log('desc: ' + doc.desc);
-          console.log('file: ' + doc.fileLoc);
-          console.log('user: ' + doc.uid);
+      this.docs$.subscribe(docInfos => {
+        for (const docInfo of docInfos) {
+          console.log('ID: ' + docInfo.id);
+          console.log('name: ' + docInfo.data.displayName);
+          console.log('desc: ' + docInfo.data.desc);
+          console.log('file: ' + docInfo.data.fileLoc);
+          console.log('user: ' + docInfo.data.uid);
           console.log('============');
         }
       });
@@ -50,9 +48,11 @@ export class GraphSelectorComponent implements OnInit {
   }
 
   onSubmit() {
-    const chosenGraphUrl = this.graphsForm.value.chosenGraphFile;
-    console.warn('Form submitted with value: ' + chosenGraphUrl);
-    this.gserv.changeUrl(chosenGraphUrl);
+    const docID = this.graphsForm.value.chosenGraphDoc;
+    if (!environment.production) {
+      console.warn('Form submitted with value: ' + docID);
+    }
+    this.gserv.selectGraphFromDB(docID);
   }
 }
 

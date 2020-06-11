@@ -35,7 +35,8 @@
               "src/assets/lib/sigma/sigma.min.js",
               "src/assets/lib/sigma/plugins/sigma.exporters.gexf.min.js",
               "src/assets/lib/sigma/plugins/sigma.exporters.json.min.js",
-              "src/assets/lib/sigma/plugins/sigma.parsers.gexf.min.js"
+              "src/assets/lib/sigma/plugins/sigma.parsers.gexf.min.js",
+              "src/assets/lib/sigma/plugins/sigma.parsers.json.min.js"
             ]
           },
           "configurations": {
@@ -105,7 +106,8 @@
               "src/assets/lib/sigma/sigma.min.js",
               "src/assets/lib/sigma/plugins/sigma.exporters.gexf.min.js",
               "src/assets/lib/sigma/plugins/sigma.exporters.json.min.js",
-              "src/assets/lib/sigma/plugins/sigma.parsers.gexf.min.js"
+              "src/assets/lib/sigma/plugins/sigma.parsers.gexf.min.js",
+              "src/assets/lib/sigma/plugins/sigma.parsers.json.min.js"
             ]
           }
         },

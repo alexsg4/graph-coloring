@@ -17,7 +17,7 @@ export class AppComponent implements OnInit {
     iconRegistry: MatIconRegistry,
     sanitizer: DomSanitizer) {
 
-      iconRegistry.addSvgIcon('github', sanitizer.bypassSecurityTrustResourceUrl('assets/img/ico-github.svg'));
+      iconRegistry.addSvgIcon('github', sanitizer.bypassSecurityTrustResourceUrl('assets/icon/ico-github.svg'));
     }
 
   ngOnInit(): void {

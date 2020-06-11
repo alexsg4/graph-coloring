@@ -2,11 +2,9 @@ import { Component, OnInit } from '@angular/core';
 import { StrategySelectService } from '../coloring-controls/strategy-select.service';
 import { ColoringService } from '../coloring.service';
 import { ColorGeneratorService } from '../color-generator.service';
-import { GraphSelectService } from '../../services/graph-select.service';
-import { FilesService } from '../../services/files.service';
+import { GraphSelectService, GraphSelection } from '../../services/graph-select.service';
 import { ConsoleWriterService } from '../../console/console-writer.service';
-
-declare const sigma: any;
+import { environment } from 'src/environments/environment';
 
 @Component({
   selector: 'app-graph-view',
@@ -17,8 +15,9 @@ export class GraphViewComponent implements OnInit {
 
   private sigmaInstance: any;
   isColored: boolean;
+
   private graphContainerId = 'graph-container';
-  private fallbackGraphPath = 'assets/graphs/fallback.gexf';
+  private fallbackGraphSelection = {url: 'assets/graphs/fallback.gexf', ftype: 'gexf'};
 
   private prevColoring;
 
@@ -26,7 +25,6 @@ export class GraphViewComponent implements OnInit {
               private coloringService: ColoringService,
               private colorGenerator: ColorGeneratorService,
               private graphSelect: GraphSelectService,
-              private fserv: FilesService,
               private writer: ConsoleWriterService) {
 
 
@@ -54,12 +52,11 @@ export class GraphViewComponent implements OnInit {
     this.bindSigmaEvents();
 
     // Listen for graph choice
-    this.graphSelect.chosenGraphUrl$.subscribe(async url => {
-      if (!url || !url.length) {
+    this.graphSelect.currentSelection$.subscribe(async selection => {
+      if (!selection || !selection.url) {
         return;
       }
-
-      this.loadGraphFromFile(url);
+      this.loadGraphFromSelection(selection);
     });
 
     // Listen for coloring strategy
@@ -72,7 +69,7 @@ export class GraphViewComponent implements OnInit {
     );
 
     // Load the default graph
-    this.loadGraphFromFile(this.fallbackGraphPath);
+    this.loadGraphFromSelection(this.fallbackGraphSelection);
   }
 
 
@@ -212,7 +209,9 @@ export class GraphViewComponent implements OnInit {
     for (const node of graph.nodes()) {
       // NOTE this is sneaky but we also LABEL all nodes here and color them black
       node.label = node.id;
-      node.color = '#000000';
+      if (node.color !== '#000000') {
+        node.color = '#000000';
+      }
 
       const id = parseInt(node.id, 10);
       needRebuild = isNaN(id) || id >= nodesCount;
@@ -225,7 +224,6 @@ export class GraphViewComponent implements OnInit {
       return;
     }
 
-    console.warn('Graph will be rebuilt with sequential node ids!');
     let nodeId = 0;
     const newIds = new Map<string, number>();
 
@@ -266,23 +264,41 @@ export class GraphViewComponent implements OnInit {
         weight: oldEdge.weight
       });
     }
+
+    this.writer.writeMessage('Loaded graph was rebuilt with sequential node ids.', 'warn');
+    this.writer.writeMessage('Loaded graph coloring was reset to black.', 'log');
   }
 
-  private loadGraphFromFile(file: string|Blob) {
-    if (!file || file === '') {
-      console.warn('Invalid file.');
+  private loadGraphFromSelection(selection: GraphSelection) {
+    if (!selection) {
+      console.warn('Invalid graph selection!' );
       return;
     }
-    sigma.parsers.gexf(
-      file,
-      this.sigmaInstance,
-      () => {
-        this.rebuildGraphIfNecessary(this.sigmaInstance.graph);
-        this.sigmaInstance.refresh();
-        // hack: refresh twice to ensure graph is displayed correctly
-        this.sigmaInstance.refresh();
-      }
-    );
+    const url = selection.url;
+
+    if (selection.ftype.match('^.*(json)$')) {
+      sigma.parsers.json(
+        url,
+        this.sigmaInstance,
+        () => {
+          this.rebuildGraphIfNecessary(this.sigmaInstance.graph);
+          this.sigmaInstance.refresh();
+          // hack: refresh twice to ensure graph is displayed correctly
+          this.sigmaInstance.refresh();
+        }
+      );
+    } else if (selection.ftype.match('^.*(gexf|xml)$')) {
+      sigma.parsers.gexf(
+        url,
+        this.sigmaInstance,
+        () => {
+          this.rebuildGraphIfNecessary(this.sigmaInstance.graph);
+          this.sigmaInstance.refresh();
+          // hack: refresh twice to ensure graph is displayed correctly
+          this.sigmaInstance.refresh();
+        }
+      );
+    }
   }
 
   private colorGraph(strategy: string): void {
@@ -345,5 +361,17 @@ export class GraphViewComponent implements OnInit {
 
     this.isColored = true;
     this.sigmaInstance.refresh();
+  }
+
+  async getJSONGraph(dl = false) {
+
+    const params = {
+      download: dl,
+      fileName: 'coloredGraph.json',
+      pretty: true
+    };
+    const jsonGraph = await this.sigmaInstance.toJSON(params);
+
+    return jsonGraph;
   }
 }

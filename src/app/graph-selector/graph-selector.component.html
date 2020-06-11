@@ -2,9 +2,10 @@
 <mat-dialog-content>
   <label>Choose a graph:</label>
   <form [formGroup] = "graphsForm" (ngSubmit) = "onSubmit()">
-    <mat-radio-group *ngIf = "files$" formControlName = "chosenGraphFile">
-      <mat-radio-button *ngFor="let file of files$ | async" value = {{file.fileLoc}}>
-          {{file.displayName}} <span> {{file.desc}} </span>
+    <mat-radio-group *ngIf = "docs$" formControlName = "chosenGraphDoc">
+      <mat-radio-button *ngFor="let doc of docs$ | async"
+      value = {{doc.id}}>
+          {{doc.data.displayName}} <span> {{doc.data.desc}} | {{doc.data.fileType}} </span>
       </mat-radio-button>
     </mat-radio-group>
   </form>
