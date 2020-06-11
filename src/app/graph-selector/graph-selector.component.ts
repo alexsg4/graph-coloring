@@ -59,7 +59,7 @@ export class GraphSelectorComponent implements OnInit {
 @Component({
   selector: 'app-graph-selector-open',
   template: `
-    <button mat-flat-button (click) = "openDialog()"
+    <button mat-raised-button (click) = "openDialog()"
       color="accent"
       matTooltip="Choose or upload a graph to color"> Graphs
     </button>
