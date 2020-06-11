@@ -47,6 +47,6 @@ testem.log
 Thumbs.db
 
 # Firebase
-.firebase/hosting*
+.firebase
 firebase-debug.log
 src/app/firebase-config.ts
