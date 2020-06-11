@@ -36,6 +36,7 @@ export class GraphSelectorComponent implements OnInit {
           console.log('name: ' + docInfo.data.displayName);
           console.log('desc: ' + docInfo.data.desc);
           console.log('file: ' + docInfo.data.fileLoc);
+          console.log('type: ' + docInfo.data.fileType);
           console.log('user: ' + docInfo.data.uid);
           console.log('============');
         }
