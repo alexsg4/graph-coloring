@@ -21,13 +21,15 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatRadioModule } from '@angular/material/radio';
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatIconModule } from '@angular/material/icon';
 
 // App
 import { GraphModule } from './graph/graph.module';
 
 import {
   GraphSelectorComponent,
-  GraphSelectorDialogOpenerComponent } from './graph-selector/graph-selector.component';
+  GraphSelectorDialogOpenerComponent
+} from './graph-selector/graph-selector.component';
 import { UploaderComponent } from './uploader/uploader.component';
 import { UploadSnackbarComponent } from './uploader/upload-snackbar/upload-snackbar.component';
 import { ConsoleComponent } from './console/console.component';
@@ -61,6 +63,7 @@ import { ConsoleComponent } from './console/console.component';
     MatRadioModule,
     MatDialogModule,
     MatSnackBarModule,
+    MatIconModule,
 
     // App
     GraphModule,

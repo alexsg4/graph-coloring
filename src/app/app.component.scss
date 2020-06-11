@@ -31,11 +31,22 @@ main {
     #footer{
       display: flex;
       flex-direction: row;
-      align-items: center;
-      padding: 0 0.7em;
+      align-content: center;
+      justify-items: start;
+      padding: 0 0.2em;
 
       background: $col-bg-footer;
       color: white;
+
+      span {
+        position: absolute;
+        left: 1em;
+      }
+
+      .git-icon {
+        position: absolute;
+        right: 1em;
+      }
     }
   }
 }

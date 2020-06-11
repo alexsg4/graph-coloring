@@ -1,6 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { AuthService } from './services/auth.service';
 
+import {DomSanitizer} from '@angular/platform-browser';
+import {MatIconRegistry} from '@angular/material/icon';
+
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
@@ -9,7 +12,13 @@ import { AuthService } from './services/auth.service';
 export class AppComponent implements OnInit {
   title = 'Graph Coloring';
 
-  constructor(private auth: AuthService) { }
+  constructor(
+    private auth: AuthService,
+    iconRegistry: MatIconRegistry,
+    sanitizer: DomSanitizer) {
+
+      iconRegistry.addSvgIcon('github', sanitizer.bypassSecurityTrustResourceUrl('assets/img/ico-github.svg'));
+    }
 
   ngOnInit(): void {
     console.log('AppComponent: OnInit!');
