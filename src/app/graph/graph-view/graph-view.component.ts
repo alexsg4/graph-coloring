@@ -16,9 +16,9 @@ declare const sigma: any;
 export class GraphViewComponent implements OnInit {
 
   private sigmaInstance: any;
-  private isColored: boolean;
+  isColored: boolean;
   private graphContainerId = 'graph-container';
-  private fallbackGraphPath = 'assets/graphs/testGraph-2.gexf';
+  private fallbackGraphPath = 'assets/graphs/fallback.gexf';
 
   private prevColoring;
 
