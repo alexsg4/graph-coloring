@@ -82,7 +82,7 @@ export class UploaderComponent implements OnInit {
 
   async tryUpload(file: File, fileType: string) {
     // check file is valid
-    if (!file || !fileType || !fileType.match('^.+(gexf|xml|json)$')) {
+    if (!file || !fileType || !fileType.match('^gexf|xml|json$')) {
       console.warn('Invalid file for upload!');
       return;
     }
@@ -144,7 +144,7 @@ export class UploaderComponent implements OnInit {
       console.error(e);
     };
     const file = this.fileInput.nativeElement.files[0];
-    fileType = file.type || null;
+    fileType = file.type || file.name.split('.').pop();
     reader.readAsArrayBuffer(file);
   }
 
