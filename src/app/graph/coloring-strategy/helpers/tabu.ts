@@ -234,14 +234,15 @@ export function Tabu(
     // if we only found tabu moves, then take a random move
     if (bestNode === -1) {
       bestNode = Math.floor(Math.random() * n);
-      bestCol = Math.floor(Math.random() * numColors) + 1;
       const col = coloring.get(nodes[bestNode].id);
+      bestCol = col;
 
-      while (bestCol !== col) {
+      // ensure new color is unique
+      while (bestCol === col) {
         bestCol = Math.floor(Math.random() * numColors) + 1;
         numChecks += 2;
-        bestCost = cost + conflicts[bestCol][bestNode] - conflicts[col][bestNode];
       }
+      bestCost = cost + conflicts[bestCol][bestNode] - conflicts[col][bestNode];
     }
 
     let tenure = tabuTenure;
