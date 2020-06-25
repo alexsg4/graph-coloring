@@ -335,12 +335,11 @@ export class HEAStrategy extends ColoringStrategy {
       const iStr = i.toString();
       const colorVal = osp.get(iStr);
 
-      if (colorVal === undefined) {
+      // NOTE color indexes are 1-based
+      if (typeof colorVal === 'undefined') {
         const randColor = Math.floor(Math.random() * numColors) + 1;
         osp.set(iStr, randColor);
-      }
-
-      if (colorVal < 1) {
+      } else if (colorVal < 1) {
         console.error('Invalid color found in osp. Something went wrong!');
       }
     }
