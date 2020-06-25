@@ -43,7 +43,7 @@ export class HEAConfig {
     this.frequency = freq !== 0 ? Math.abs(Math.floor(freq)) : 15000;
     this.increment = inc !== 0 ? Math.abs(Math.floor(inc)) : 1;
 
-    // TODO tweak magic numbers (sane defaults based on the literature)
+    // TODO tweak magic numbers (sane defaults based on existing literature)
     this.popSize = 10;
     this.maxTabuIter = 16;
   }
@@ -223,7 +223,7 @@ export class HEAStrategy extends ColoringStrategy {
   }
 
   /**
-   * Do a GPX crossover with 2 parents, update the population by replacing
+   * Do a GPX crossover with 2 parents
    *
    * @param parents - parents array
    * @param graph - graph
@@ -253,8 +253,6 @@ export class HEAStrategy extends ColoringStrategy {
     const parentCardinality = new Array<number>(numParents).fill(null).map(
       () => new Array<number>(numColors + 1).fill(0)
     );
-
-    // TODO choose parents randomly at first
 
     // build a copy of the parents for bookkeeping later
     const parentsCopies = new Array(numParents).fill(null);
@@ -332,7 +330,7 @@ export class HEAStrategy extends ColoringStrategy {
       }
     }
 
-    // crossover done - color remaining nodes randomly
+    // crossover done - randomly color the remaining nodes
     for (let i = 0; i < n; i++) {
       const iStr = i.toString();
       const colorVal = osp.get(iStr);
@@ -451,7 +449,7 @@ export class HEAStrategy extends ColoringStrategy {
         const [tCost, tChecks] = Tabu(graph, population[i], numColors,
           this.config.tenure, this.config.maxTabuIter, -1, this.numChecks);
 
-          // update cost and number of clash checks after tabu
+        // update cost and number of clash checks after tabu
         popCosts[i] = tCost;
         this.numChecks = tChecks;
 
@@ -474,6 +472,13 @@ export class HEAStrategy extends ColoringStrategy {
 
       // EVOLUTIONARY LOOP
       while (this.numChecks < this.config.maxChecks && !foundSol) {
+
+        // RANDOMLY CHOOSE PARENTS
+        parents[0] = Math.floor(Math.random() * population.length);
+        parents[1] = parents[0];
+        while (parents[1] === parents[0]) {
+          parents[1] = Math.floor(Math.random() * population.length);
+        }
 
         // DO CROSSOVER
         osp = this.crossover(parents, graph, numColors, population);
