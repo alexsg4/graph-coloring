@@ -305,9 +305,13 @@ export class HEAStrategy extends ColoringStrategy {
         console.error('Could not choose suitable parent in crossover!');
       } else {
         // randomly choose a parent/color
-        const id = Math.floor(Math.random() * maxParents.length);
-        chosenParent = maxParents[id];
-        chosenColor = maxParents[id];
+        if (maxParents.length !== maxColors.length) {
+          console.error('maxParent list should be equal length to maxColor List')
+        }
+
+        const randChoice = Math.floor(Math.random() * maxParents.length);
+        chosenParent = maxParents[randChoice];
+        chosenColor = maxColors[randChoice];
       }
       tabuList[chosenParent] = c + 1;
       /** copy all of chosenParent's chosenColor-ed nodes to offspring AS color c and
