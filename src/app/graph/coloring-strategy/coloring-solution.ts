@@ -41,11 +41,17 @@ export class ColoringSolution {
       return undefined;
     }
 
-    for (const node of graph.nodes()) {
-      for (const neighbourNodeId of graph.getAdjList(node.id)) {
-        if (this.coloring.get(node.id) === this.coloring.get(neighbourNodeId)) {
-          return false;
-        }
+    for (const edge of graph.edges()) {
+      const srcCol = this.coloring.get(edge.source);
+      const destCol = this.coloring.get(edge.target);
+
+      if (srcCol == undefined || destCol == undefined) {
+        console.error('Coloring is not complete!');
+
+        return false;
+      }
+      if (srcCol === destCol) {
+        return false;
       }
     }
     return true;
