@@ -74,20 +74,6 @@ export class GraphViewComponent implements OnInit {
 
 
   private addGraphMethods() {
-    sigma.classes.graph.addMethod('hasEdgeBetween', function(nodeID1: string, nodeID2: string): boolean {
-      if (!this.nodesIndex[nodeID1] || !this.nodesIndex[nodeID2]) {
-        console.error('Checking adj. for non-existent nodes!');
-        return false;
-      }
-      for (const edge of this.edgesArray) {
-        if ((edge.source === nodeID1 && edge.target === nodeID2) ||
-        (edge.source === nodeID2 && edge.target === nodeID1)) {
-          return true;
-        }
-      }
-      return false;
-    });
-
     sigma.classes.graph.addMethod('resetColoring', function(): void {
       for (let i = 0; i < this.nodesArray.length; i++) {
         const node = this.nodesIndex[i];
@@ -127,6 +113,42 @@ export class GraphViewComponent implements OnInit {
     sigma.classes.graph.addMethod('getNodesCount', function() {
       return this.nodesArray.length;
     });
+    
+    sigma.classes.graph.addMethod('buildAdjMatrix', function() {
+      const n = this.nodesArray.length;
+      if (this.adjMatrix) {
+        console.warn('Adjacency matrix already exists. Will rebuild!');
+      }
+      
+      this.adjMatrix = new Array(n).fill(false).map(
+        () => new Array<boolean>(n).fill(false));
+
+      for (const edge of this.edgesArray) {
+        const source = parseInt(edge.source);
+        const dest = parseInt(edge.target);
+
+        this.adjMatrix[source][dest] = true;
+        this.adjMatrix[dest][source] = true;
+      }
+    });
+
+    sigma.classes.graph.addMethod('hasEdgeBetween', function(nodeID1: string, nodeID2: string): boolean {
+      if (!this.nodesIndex[nodeID1] || !this.nodesIndex[nodeID2]) {
+        console.error('Checking adj. for non-existent nodes!');
+        return false;
+      }
+
+      if (!this.adjMatrix) {
+        console.error('Graph has no adjacency matrix!');
+
+        return false;
+      }
+
+      const source = parseInt(nodeID1);
+      const dest = parseInt(nodeID2);
+
+      return this.adjMatrix[nodeID1][nodeID2];
+    });
 
     sigma.classes.graph.addMethod('getAdjList', function(nodeID: string): Array<string> {
       if (!this.nodesIndex[nodeID]) {
@@ -135,15 +157,22 @@ export class GraphViewComponent implements OnInit {
       }
 
       const neighbours = new Array<string>();
-      for (const edge of this.edgesArray) {
-        if (edge.target === nodeID) {
-          neighbours.push(edge.source);
-        } else if (edge.source === nodeID) {
-          neighbours.push(edge.target);
+      if (!this.adjMatrix) {
+        console.error('Graph has no adjacency matrix!');
+
+        return neighbours;
+      }
+
+      const iNode = parseInt(nodeID);
+      for(let i = 0; i < this.nodesArray.length; i++) {
+        if (this.adjMatrix[iNode][i]) {
+          neighbours.push(i.toString(10));
         }
       }
+
       return neighbours;
     });
+
   }
 
   // TESTING
@@ -282,6 +311,8 @@ export class GraphViewComponent implements OnInit {
         this.sigmaInstance,
         () => {
           this.rebuildGraphIfNecessary(this.sigmaInstance.graph);
+          this.sigmaInstance.graph.buildAdjMatrix();
+
           this.sigmaInstance.refresh();
           // hack: refresh twice to ensure graph is displayed correctly
           this.sigmaInstance.refresh();
@@ -293,6 +324,8 @@ export class GraphViewComponent implements OnInit {
         this.sigmaInstance,
         () => {
           this.rebuildGraphIfNecessary(this.sigmaInstance.graph);
+          this.sigmaInstance.graph.buildAdjMatrix();
+          
           this.sigmaInstance.refresh();
           // hack: refresh twice to ensure graph is displayed correctly
           this.sigmaInstance.refresh();
