@@ -78,10 +78,12 @@ export class DSaturStrategy extends ColoringStrategy {
     for (const node of graph.nodes()) {
       nodeIds[k++] = node.id;
     }
-    this.shuffleArray(nodeIds);
+    
+    // DISABLE SHUFFLE for consistency
+    //this.shuffleArray(nodeIds);
 
     // then sort based on degree
-    // usually this is implemented as a O(n*log(n)) STABLE sort
+    // ES6 sort is NOT STABLE
     nodeIds.sort((lhs: string, rhs: string) => {
       return (graph.degree(lhs) - graph.degree(rhs));
     });
@@ -102,16 +104,17 @@ export class DSaturStrategy extends ColoringStrategy {
     saturation.pop();
     for (let i = 0; i < saturation.length; i++) {
       this.numChecks++;
-      if (graph.hasEdgeBetween(node, nodeIds[i])) {
-        saturation[i]++;
+      const otherNode = nodeIds[i];
+      if (graph.hasEdgeBetween(node, otherNode)) {
+        saturation[otherNode]++;
       }
     }
 
     let maxSaturation: number;
-    let nodeIndex = 0;
+    let nodeIndex = nodeIds.length - 1;
     while (nodeIds.length > 0) {
       maxSaturation = -1;
-      for (let i = 0; i < saturation.length; i++) {
+      for (let i = nodeIndex; i >= 0; i--) {
         if (saturation[i] > maxSaturation) {
           maxSaturation = saturation[i];
           nodeIndex = i;
@@ -124,8 +127,9 @@ export class DSaturStrategy extends ColoringStrategy {
         nodeColoring.set(currentNode, color);
 
         for (let i = 0; i < nodeIds.length; i++) {
-          if (graph.hasEdgeBetween(currentNode, nodeIds[i])) {
-            saturation[i]++;
+          const otherNode = nodeIds[i];
+          if (graph.hasEdgeBetween(currentNode, otherNode)) {
+            saturation[otherNode]++;
           }
         }
       }
